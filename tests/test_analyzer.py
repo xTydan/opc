@@ -46,6 +46,21 @@ class AnalyzerTests(unittest.TestCase):
         result = analyze_import(payload)
         self.assertEqual(result["results"][0]["id"], "high")
 
+
+    def test_import_parses_components_from_description(self):
+        listing = {
+            "id": "description-only",
+            "title": "PC from description",
+            "price": 1200,
+            "description": "Ryzen 5 5600X, RTX 3070, 32GB DDR4, SSD 1TB",
+        }
+        result = analyze_listing(listing)
+        self.assertTrue(result["components_parsed_from_description"])
+        categories = {item["category"] for item in result["components"]}
+        self.assertTrue({"cpu", "gpu", "ram", "storage"}.issubset(categories))
+        self.assertFalse(result["valuation_complete"])
+        self.assertEqual(len(result["missing_valuations"]), 4)
+
     def test_negative_price_is_rejected(self):
         with self.assertRaises(ValueError):
             analyze_listing({"price": -1, "components": []})
