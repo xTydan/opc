@@ -84,6 +84,23 @@ function cardFor(row) {
     if (component.valuation && component.valuation.reason) {
       item.append(el("small", "", "Wycena: " + component.valuation.reason));
     }
+    const benchmark = (row.benchmark_scores_used || []).find((entry) =>
+      entry.category === component.category && entry.model === component.model
+    );
+    if (benchmark) {
+      const sourceLine = "Benchmark: " + benchmark.benchmark + " · wynik " + number(benchmark.score)
+        + " · " + (benchmark.source || "źródło nieznane")
+        + " · " + (benchmark.license || "licencja nieznana")
+        + " · aktualizacja " + (benchmark.dataset_updated_at || "brak daty");
+      item.append(el("small", "", sourceLine));
+      if (benchmark.url) {
+        const sourceLink = el("a", "text-link", "Źródło benchmarku ↗");
+        sourceLink.href = benchmark.url;
+        sourceLink.target = "_blank";
+        sourceLink.rel = "noopener noreferrer";
+        item.append(sourceLink);
+      }
+    }
     if (component.attributes && Object.keys(component.attributes).length) {
       const attrs = Object.entries(component.attributes)
         .filter((entry) => entry[1] !== null && entry[1] !== undefined && entry[1] !== false)
