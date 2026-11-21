@@ -127,19 +127,19 @@ class AnalyzerTests(unittest.TestCase):
         listing = {
             "price": 500,
             "components": [
-                {"category": "cpu", "model": "CPU", "estimated_sale_price": 200},
-                {"category": "gpu", "model": "GPU", "estimated_sale_price": 300},
-                {"category": "motherboard", "model": "Board", "estimated_sale_price": 100},
-                {"category": "ram", "model": "RAM", "estimated_sale_price": 100},
-                {"category": "storage", "model": "SSD", "estimated_sale_price": 100},
-                {"category": "psu", "model": "PSU", "estimated_sale_price": 100},
+                {"category": "cpu", "model": "CPU", "estimated_sale_price": 200, "confidence": "high"},
+                {"category": "gpu", "model": "GPU", "estimated_sale_price": 300, "confidence": "high"},
+                {"category": "motherboard", "model": "Board", "estimated_sale_price": 100, "confidence": "high"},
+                {"category": "ram", "model": "RAM", "estimated_sale_price": 100, "confidence": "high"},
+                {"category": "storage", "model": "SSD", "estimated_sale_price": 100, "confidence": "high"},
+                {"category": "psu", "model": "PSU", "estimated_sale_price": 100, "confidence": "high"},
                 {"category": "case", "model": "Unknown case", "confidence": "low"},
             ],
         }
         result = analyze_listing(listing)
         self.assertTrue(result["valuation_complete"])
         self.assertEqual(result["missing_optional_valuations"], ["Unknown case"])
-        self.assertEqual(result["estimated_net_profit"], 300.0)
+        self.assertEqual(result["estimated_net_profit"], 400.0)
         self.assertTrue(result["meets_target"])
         self.assertIn("optional parts are excluded", result["profit_basis"])
 
