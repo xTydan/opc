@@ -96,6 +96,25 @@ class ComponentParserTests(unittest.TestCase):
         self.assertFalse(result["missing_required_categories"])
         self.assertIsNone(by_category["gpu"]["estimated_sale_price"])
 
+
+    def test_gpu_board_variant_and_ram_speed_are_extracted(self):
+        result = parse_description(
+            "ASUS TUF Gaming GeForce RTX 4070 Ti 12GB, 2x16GB DDR4 3600MHz."
+        )
+        by_category = {item["category"]: item for item in result["components"]}
+        self.assertEqual(by_category["gpu"]["manufacturer"], "ASUS")
+        self.assertEqual(by_category["gpu"]["board_variant"], "TUF GAMING")
+        self.assertTrue(by_category["gpu"]["exact_variant_known"])
+        self.assertEqual(by_category["ram"]["capacity_gb"], 32)
+        self.assertEqual(by_category["ram"]["stick_count"], 2)
+        self.assertEqual(by_category["ram"]["speed_mhz"], 3600)
+
+    def test_radeon_xtx_suffix_is_not_truncated(self):
+        result = parse_description("AMD Radeon RX 7900 XTX 24GB Sapphire Nitro+")
+        gpu = next(item for item in result["components"] if item["category"] == "gpu")
+        self.assertIn("XTX", gpu["gpu_model"])
+        self.assertNotEqual(gpu["gpu_model"], "AMD Radeon RX 7900 XT")
+
     def test_invalid_input_is_rejected(self):
         with self.assertRaises(ValueError):
             parse_description(None)  # type: ignore[arg-type]
