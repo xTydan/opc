@@ -12,6 +12,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
 from .component_parser import parse_description
+from .hardware_benchmarks import find_benchmark_score
 from .valuation_engine import estimate_component_value
 
 CENT = Decimal("0.01")
@@ -37,6 +38,8 @@ def analyze_listing(
     minimum_roi_percent: Any = 0,
     valuation_options: dict[str, Any] | None = None,
     as_of: datetime | None = None,
+    benchmark_dataset: dict[str, Any] | None = None,
+    benchmark_names: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Analyze one listing; do not publish a full profit figure for an incomplete PC."""
     if not isinstance(listing, dict):
@@ -89,6 +92,39 @@ def analyze_listing(
             parsed_description = parse_description(source_text)
             components = parsed_description["components"]
 
+    benchmark_names = benchmark_names or {}
+    benchmark_provenance: list[dict[str, Any]] = []
+
+    def attach_benchmark_score(record: dict[str, Any]) -> None:
+        if not benchmark_dataset:
+            return
+        category_name = str(record.get("category") or "").casefold()
+        benchmark_name = benchmark_names.get(category_name)
+        if not benchmark_name or not record.get("model"):
+            return
+        result = find_benchmark_score(
+            benchmark_dataset,
+            category=category_name,
+            model=str(record.get("model")),
+            benchmark=str(benchmark_name),
+            as_of=as_of.date() if as_of else None,
+        )
+        if result.get("status") == "matched":
+            record["benchmark_score"] = result["score"]
+            record["benchmark_name"] = result["benchmark"]
+            benchmark_provenance.append({
+                "category": category_name,
+                "model": record.get("model"),
+                "benchmark": result["benchmark"],
+                "score": result["score"],
+                "samples": result.get("samples"),
+                "source": result.get("source"),
+                "license": result.get("license"),
+                "dataset_updated_at": result.get("dataset_updated_at"),
+                "url": result.get("url"),
+                "status": result.get("status"),
+            })
+
     seen_categories: set[str] = set()
     internal_component_keys = {
         "category", "model", "confidence", "evidence", "estimated_sale_price",
@@ -102,6 +138,11 @@ def analyze_listing(
         if category != "unknown":
             seen_categories.add(category)
         model = str(component.get("model") or category or f"component {index + 1}")
+
+        attach_benchmark_score(component)
+        for comparable in component.get("comparables") or []:
+            if isinstance(comparable, dict):
+                attach_benchmark_score(comparable)
 
         identification_confidence = str(component.get("confidence") or "low").lower()
         if identification_confidence not in VALID_CONFIDENCE:
@@ -283,10 +324,15 @@ def analyze_listing(
             parsed_description["unrecognized_categories"] if parsed_description else []
         ),
         "components": component_details,
+        "benchmark_scores_used": benchmark_provenance,
     }
 
 
-def analyze_import(payload: dict[str, Any], config: dict[str, Any] | None = None) -> dict[str, Any]:
+def analyze_import(
+    payload: dict[str, Any],
+    config: dict[str, Any] | None = None,
+    benchmark_dataset: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Analyze all listings in a versioned import payload."""
     if not isinstance(payload, dict):
         raise ValueError("Import must be a JSON object")
@@ -315,6 +361,8 @@ def analyze_import(payload: dict[str, Any], config: dict[str, Any] | None = None
             target_profit=target_profit,
             minimum_roi_percent=minimum_roi,
             valuation_options=valuation_options,
+            benchmark_dataset=benchmark_dataset,
+            benchmark_names=analysis_config.get("benchmark_names", {}),
         )
         for item in listings
     ]
@@ -331,5 +379,10 @@ def analyze_import(payload: dict[str, Any], config: dict[str, Any] | None = None
         "source": payload.get("source", "unknown"),
         "exported_at": payload.get("exported_at"),
         "analyzed_count": len(results),
+        "benchmark_dataset": ({
+            "source": benchmark_dataset.get("source"),
+            "license": benchmark_dataset.get("license"),
+            "updated_at": benchmark_dataset.get("updated_at"),
+        } if benchmark_dataset else None),
         "results": results,
     }
