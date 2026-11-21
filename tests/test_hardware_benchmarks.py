@@ -78,8 +78,8 @@ class HardwareBenchmarkTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "benchmarks.csv"
             path.write_text(
-                "source,license,updated_at,category,model,benchmark,score,samples\\n"
-                "Open dataset,CC-BY-4.0,2026-11-20,gpu,RTX 3050,gaming_index,62.5,120\\n",
+                "source,license,updated_at,category,model,benchmark,score,samples\n"
+                "Open dataset,CC-BY-4.0,2026-11-20,gpu,RTX 3050,gaming_index,62.5,120\n",
                 encoding="utf-8",
             )
             dataset = load_benchmark_dataset(path)
@@ -90,9 +90,9 @@ class HardwareBenchmarkTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "benchmarks.csv"
             path.write_text(
-                "source,license,updated_at,category,model,benchmark,score\\n"
-                "Open dataset,CC-BY-4.0,2026-11-20,gpu,RTX 3050,gaming_index,62.5\\n"
-                "Other dataset,CC-BY-4.0,2026-11-20,gpu,RTX 3060,gaming_index,75\\n",
+                "source,license,updated_at,category,model,benchmark,score\n"
+                "Open dataset,CC-BY-4.0,2026-11-20,gpu,RTX 3050,gaming_index,62.5\n"
+                "Other dataset,CC-BY-4.0,2026-11-20,gpu,RTX 3060,gaming_index,75\n",
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "must be consistent"):
