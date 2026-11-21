@@ -215,9 +215,12 @@ def analyze_listing(
         roi_percent: float | None = float(
             roi_value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         )
+        profit_price_cap = known_component_total - total_extra_costs - required_profit
+        roi_multiplier = Decimal("1") + minimum_roi / Decimal("100")
+        roi_price_cap = known_component_total / roi_multiplier - total_extra_costs
         max_purchase_price: float | None = float(max(
             Decimal("0.00"),
-            known_component_total - total_extra_costs - required_profit,
+            min(profit_price_cap, roi_price_cap),
         ))
         meets_target = (
             net_profit >= required_profit
