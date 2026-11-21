@@ -223,7 +223,7 @@ def _extract_storage(text: str, found: list[dict[str, Any]]) -> None:
                 continue
             seen.add(key)
 
-            model = f"{brand} {storage_kind} {size}{unit}" if brand else f"{storage_kind} {size}{unit}"
+            model = f"{brand} {size}{unit} {storage_kind}" if brand else f"{size}{unit} {storage_kind}"
             evidence_start = max(0, match.start() - (30 if brand else 0))
             _add(
                 found,
