@@ -122,6 +122,27 @@ class AnalyzerTests(unittest.TestCase):
         self.assertIsNotNone(gpu["estimated_sale_price"])
         self.assertTrue(result["valuation_complete"])
 
+
+    def test_unvalued_optional_case_does_not_fake_or_block_core_estimate(self):
+        listing = {
+            "price": 500,
+            "components": [
+                {"category": "cpu", "model": "CPU", "estimated_sale_price": 200},
+                {"category": "gpu", "model": "GPU", "estimated_sale_price": 300},
+                {"category": "motherboard", "model": "Board", "estimated_sale_price": 100},
+                {"category": "ram", "model": "RAM", "estimated_sale_price": 100},
+                {"category": "storage", "model": "SSD", "estimated_sale_price": 100},
+                {"category": "psu", "model": "PSU", "estimated_sale_price": 100},
+                {"category": "case", "model": "Unknown case", "confidence": "low"},
+            ],
+        }
+        result = analyze_listing(listing)
+        self.assertTrue(result["valuation_complete"])
+        self.assertEqual(result["missing_optional_valuations"], ["Unknown case"])
+        self.assertEqual(result["estimated_net_profit"], 300.0)
+        self.assertTrue(result["meets_target"])
+        self.assertIn("optional parts are excluded", result["profit_basis"])
+
     def test_negative_price_is_rejected(self):
         with self.assertRaises(ValueError):
             analyze_listing({"price": -1, "components": []})
