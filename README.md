@@ -10,6 +10,8 @@ Prywatny projekt do wyszukiwania potencjalnie opłacalnych komputerów używanyc
 - Rozpoznawanie CPU, GPU, RAM, płyt głównych, dysków, zasilaczy, chłodzeń, obudów i wentylatorów.
 - Zachowywanie fragmentu tekstu, który uzasadnia rozpoznanie.
 - Kalkulator kosztów, potencjalnego zysku, ROI i maksymalnej ceny zakupu.
+- Import zbiorczy JSON i CSV (separator przecinek lub średnik; polskie formaty cen).
+- Konserwatywny silnik wyceny z podanych porównywalnych ogłoszeń OLX: dokładny model, status aktywny, odczyt z ostatnich 24 godzin, minimum 5 porównań, filtrowanie wartości odstających i korekta bezpieczeństwa.
 - Zabezpieczenie: zysk i ROI nie są wyświetlane, jeśli brakuje wyceny albo kluczowej kategorii sprzętu.
 - Panel www w \`docs/\`, który importuje raport JSON, filtruje i sortuje oferty.
 - Testy Pythona i kontrola składni JavaScript w GitHub Actions.
@@ -17,7 +19,7 @@ Prywatny projekt do wyszukiwania potencjalnie opłacalnych komputerów używanyc
 
 **Jeszcze niegotowe:**
 - Automatyczne pobieranie cudzych ogłoszeń OLX.
-- Automatyczne porównywanie cen części na OLX.
+- Automatyczne zbieranie porównywalnych ogłoszeń OLX; silnik wyceniania jest gotowy na import takich danych, ale nie ma jeszcze zatwierdzonego źródła automatycznego pobierania.
 - Trwała baza historii ofert i cen.
 - Harmonogram cyklicznych skanów oraz alerty Telegram.
 
@@ -66,7 +68,7 @@ Otwórz \`docs/index.html\` w przeglądarce i wczytaj \`reports/report.json\`.
 
 ### Publikacja panelu na GitHub Pages
 
-Workflow \`.github/workflows/pages.yml\` publikuje zawartość \`docs/\` po zmianach na gałęzi \`main\`. W ustawieniach repozytorium GitHub Pages musi być użyte źródło **GitHub Actions**. Po udanym wdrożeniu strona będzie dostępna pod adresem GitHub Pages repozytorium.
+Workflow \`.github/workflows/pages.yml\` publikuje zawartość \`docs/\` po zmianach na gałęzi \`main\`. W ustawieniach repozytorium GitHub Pages musi być użyte źródło **GitHub Actions**. Dla tego repozytorium otwórz [Settings → Pages](https://github.com/xTydan/opc/settings/pages), a w sekcji **Build and deployment → Source** wybierz **GitHub Actions**. Integracja nie mogła utworzyć witryny Pages automatycznie, więc ten jednorazowy wybór musi wykonać właściciel repozytorium. Po zapisaniu ustawienia ponów workflow **Deploy dashboard** w zakładce Actions. Późniejsze zmiany w `docs/` będą publikowane automatycznie.
 
 ## Format importu
 
@@ -95,6 +97,30 @@ Główny format to JSON:
 \`\`\`
 
 Nie wpisuj tekstu typu \`1 500 zł\` w pole \`price\`; użyj liczby \`1500\`. Nie dodawaj do publicznego repozytorium prywatnych danych sprzedawców ani niepublikowanych eksportów.
+
+## Format porównywalnych ofert części
+
+Silnik wyceniania przyjmuje porównania wewnątrz obiektu komponentu. Przykładowy rekord (wartości demonstracyjne):
+
+```json
+{
+  "category": "gpu",
+  "model": "ZOTAC RTX 3050 8GB",
+  "comparables": [
+    {
+      "id": "demo-gpu-01",
+      "marketplace": "olx",
+      "model": "ZOTAC RTX 3050 8GB",
+      "price": 550,
+      "status": "active",
+      "collected_at": "2026-11-21T11:00:00+00:00",
+      "url": "https://www.olx.pl/d/oferta/demo"
+    }
+  ]
+}
+```
+
+Każda oferta musi mieć dokładny model, status aktywny, cenę PLN, czas odczytu z określoną strefą czasową i identyfikator lub URL. Domyślnie do wyceny potrzeba minimum 5 aktualnych porównań z OLX. Jeśli ich brakuje, program nie wymyśla ceny. W przypadku podania `comparables` ich wynik ma pierwszeństwo przed ręcznie wpisanym `estimated_sale_price`.
 
 ## Zasady wyceny
 
