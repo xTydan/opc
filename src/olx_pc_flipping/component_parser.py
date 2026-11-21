@@ -52,8 +52,8 @@ GPU_PATTERNS = [
         r"\b(?:(?:NVIDIA|GeForce)\s+)*(?:RTX|GTX)\s*\d{3,4}\s*(?:Ti|SUPER|XT)?\b",
         re.I,
     ),
-    re.compile(r"\b(?:AMD\s+)?Radeon\s+RX\s*\d{3,4}\s*(?:XT|XTX)?\b", re.I),
-    re.compile(r"\bRX\s*\d{3,4}\s*(?:XT|XTX)?\b", re.I),
+    re.compile(r"\b(?:AMD\s+)?Radeon\s+RX\s*\d{3,4}\s*(?:XTX|XT)?\b", re.I),
+    re.compile(r"\bRX\s*\d{3,4}\s*(?:XTX|XT)?\b", re.I),
 ]
 
 GPU_BRAND_PATTERN = re.compile(
