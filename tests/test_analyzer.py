@@ -64,6 +64,9 @@ class AnalyzerTests(unittest.TestCase):
         self.assertTrue({"cpu", "gpu", "ram", "storage"}.issubset(categories))
         self.assertFalse(result["valuation_complete"])
         self.assertEqual(len(result["missing_valuations"]), 4)
+        ram = next(item for item in result["components"] if item["category"] == "ram")
+        self.assertIsNone(ram["attributes"]["stick_count"])
+        self.assertFalse(ram["attributes"]["stick_count_known"])
 
 
     def test_partial_component_prices_never_produce_profit(self):
