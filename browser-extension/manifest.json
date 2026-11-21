@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "OLX PC Listing Collector",
+  "version": "1.0.0",
+  "description": "Collects links from the OLX results page and sends them to the local PC analysis tool.",
+  "permissions": ["activeTab"],
+  "host_permissions": ["https://www.olx.pl/*", "http://127.0.0.1:8765/*"],
+  "action": {
+    "default_title": "Zbierz ogłoszenia OLX",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.olx.pl/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
