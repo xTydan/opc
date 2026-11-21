@@ -90,9 +90,11 @@ function cardFor(row) {
   details.append(componentList);
   const missing = [
     ...(row.missing_required_categories || []).map((x) => "Brak rozpoznania: " + x),
-    ...(row.missing_valuations || []).map((x) => "Brak wyceny: " + x)
+    ...(row.missing_valuations || []).map((x) => "Brak wyceny kluczowej części: " + x),
+    ...(row.missing_optional_valuations || []).map((x) => "Pominięta wycena dodatku: " + x)
   ];
   if (missing.length) details.append(el("p", "missing-list", missing.join(" · ")));
+  if (row.profit_basis) details.append(el("p", "card-meta", row.profit_basis));
   card.append(details);
   if (row.description) {
     const descriptionDetails = el("details");
