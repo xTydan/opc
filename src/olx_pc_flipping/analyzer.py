@@ -88,6 +88,11 @@ def analyze_listing(
             components = parsed_description["components"]
 
     seen_categories: set[str] = set()
+    internal_component_keys = {
+        "category", "model", "confidence", "evidence", "estimated_sale_price",
+        "valuation_status", "comparable_listings", "valuation_confidence",
+        "comparables", "model_key",
+    }
     for index, component in enumerate(components):
         if not isinstance(component, dict):
             raise ValueError(f"components[{index}] must be an object")
@@ -132,6 +137,7 @@ def analyze_listing(
                     if valuation_data else component.get("comparable_listings", 0)
                 ),
                 "evidence": component.get("evidence"),
+                "attributes": {key: value for key, value in component.items() if key not in internal_component_keys},
                 "valuation": valuation_data,
                 "valuation_status": (
                     valuation_data.get("valuation_status", "missing")
@@ -172,6 +178,7 @@ def analyze_listing(
             "identification_confidence": identification_confidence,
             "comparable_listings": comparable_count,
             "evidence": component.get("evidence"),
+            "attributes": {key: value for key, value in component.items() if key not in internal_component_keys},
             "valuation": valuation_data,
             "valuation_status": valuation_status,
         })
