@@ -1,0 +1,25 @@
+{
+  "source": "Example open benchmark dataset",
+  "license": "CC-BY-4.0",
+  "updated_at": "2026-11-20",
+  "records": [
+    {
+      "category": "gpu",
+      "model": "NVIDIA GeForce RTX 3050 8GB",
+      "benchmark": "gpu_3dmark",
+      "score": 10000,
+      "samples": 120,
+      "methodology": "Example only; replace with a score from the cited dataset",
+      "url": "https://example.org/source-record"
+    },
+    {
+      "category": "cpu",
+      "model": "Intel Core i5-11400F",
+      "benchmark": "cpu_mark",
+      "score": 17000,
+      "samples": 85,
+      "methodology": "Example only; replace with a score from the cited dataset",
+      "url": "https://example.org/source-record"
+    }
+  ]
+}
