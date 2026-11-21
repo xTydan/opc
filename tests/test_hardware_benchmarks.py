@@ -74,6 +74,30 @@ class HardwareBenchmarkTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "source, license"):
                 load_benchmark_dataset(path)
 
+    def test_loads_csv_with_provenance_columns(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "benchmarks.csv"
+            path.write_text(
+                "source,license,updated_at,category,model,benchmark,score,samples\\n"
+                "Open dataset,CC-BY-4.0,2026-11-20,gpu,RTX 3050,gaming_index,62.5,120\\n",
+                encoding="utf-8",
+            )
+            dataset = load_benchmark_dataset(path)
+        self.assertEqual(dataset["source"], "Open dataset")
+        self.assertEqual(dataset["records"][0]["score"], 62.5)
+
+    def test_rejects_inconsistent_csv_provenance(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "benchmarks.csv"
+            path.write_text(
+                "source,license,updated_at,category,model,benchmark,score\\n"
+                "Open dataset,CC-BY-4.0,2026-11-20,gpu,RTX 3050,gaming_index,62.5\\n"
+                "Other dataset,CC-BY-4.0,2026-11-20,gpu,RTX 3060,gaming_index,75\\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "must be consistent"):
+                load_benchmark_dataset(path)
+
     def test_marks_old_dataset_stale(self):
         with tempfile.TemporaryDirectory() as directory:
             dataset = load_benchmark_dataset(self._dataset(directory))
