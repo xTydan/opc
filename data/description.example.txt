@@ -1,0 +1,9 @@
+Sprzedam komputer gamingowy:
+AMD Ryzen 5 5600X
+ASUS GeForce RTX 3070
+32GB DDR4 (2x16GB)
+MSI MAG B550 TOMAHAWK
+SSD NVMe 1TB
+Zasilacz Corsair 650W
+
+Dane demonstracyjne do testowania parsera.
