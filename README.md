@@ -6,6 +6,7 @@ Prywatny projekt do wyszukiwania potencjalnie opłacalnych komputerów używanyc
 
 **Gotowe:**
 - Parser podzespołów z polskich opisów ogłoszeń.
+- Importer otwartych baz benchmarków CPU/GPU/SSD/RAM z CSV/JSON, z obowiązkowym zachowaniem źródła, licencji, daty aktualizacji, liczby próbek i metodologii.
 - Obsługa typowych literówek, łamania linii i nietypowych separatorów.
 - Rozpoznawanie CPU, GPU, RAM, płyt głównych, dysków, zasilaczy, chłodzeń, obudów i wentylatorów.
 - Zachowywanie fragmentu tekstu, który uzasadnia rozpoznanie.
@@ -19,6 +20,7 @@ Prywatny projekt do wyszukiwania potencjalnie opłacalnych komputerów używanyc
 
 **Jeszcze niegotowe:**
 - Automatyczne pobieranie cudzych ogłoszeń OLX.
+- Automatyczne pobieranie cen rynkowych z OLX lub innego polskiego marketplace.
 - Automatyczne zbieranie porównywalnych ogłoszeń OLX; silnik wyceniania obsługuje już dopasowanie specyfikacji, ale potrzebuje danych porównawczych dostarczonych z dozwolonego źródła.
 - Trwała baza historii ofert i cen.
 - Harmonogram cyklicznych skanów oraz alerty Telegram.
@@ -152,3 +154,21 @@ Silnik nie wymaga tej samej marki dla każdej części. Dopasowuje porównania w
 - Zasilacz: `wattage` i niezależnie oceniony `quality_tier`.
 
 Nieznane parametry nie są dopowiadane. Gdy nie ma wystarczających danych, silnik odrzuca porównanie lub pozostawia wycenę pustą. Korekta ceny przy dopasowaniu specyfikacji jest celowo ograniczona do 15% w górę lub w dół; to bezpiecznik, a nie model pełnej ekonomicznej wyceny. Wyniki benchmarków i oceny jakości muszą pochodzić z wiarygodnego, udokumentowanego źródła.
+
+
+## Bezpłatne źródła danych sprzętowych
+
+Projekt ma korzystać wyłącznie z bezpłatnych źródeł. Nie zakładamy, że darmowe źródło obejmuje wszystkie modele ani że można dowolnie kopiować każdą opublikowaną tabelę.
+
+Kandydaci do zasilania katalogu:
+- [TechPowerUp Hardware Databases](https://www.techpowerup.com/database-licensing/) — bezpłatne, ograniczone API bez klucza dla wybranych kart GPU, procesorów i SSD; pełna baza jest licencjonowana. Zakres bezpłatnego zbioru trzeba sprawdzać, a nie zakładać pełne pokrycie.
+- [Open GPU Benchmarks](https://opengpubenchmarks.com/) — publiczne dane wyników GPU na licencji CC BY 4.0; przy wykorzystaniu wymagane jest przypisanie autorstwa i link do źródła.
+- [FINALBENCH](https://finalbench.org/) — archiwum historycznych wyników CPU/GPU/SSD; przydatne jako pomocnicze źródło porównawcze, ale zakres dat i metodologie testów muszą być widoczne.
+
+Importer `hardware_benchmarks.py` przyjmuje lokalne pliki CSV/JSON i wymaga jawnego pola `source`, `license` i `updated_at`. Nie pobiera samodzielnie danych z tych serwisów i nie obchodzi ich limitów. Przykładowy format znajduje się w `data/benchmarks.example.json`.
+
+Ważne ograniczenie: benchmarki opisują wydajność, a nie wartość rynkową. Nie wolno przeliczać wyniku benchmarku bezpośrednio na złotówki. Służy on wyłącznie do wyboru sensownych odpowiedników; cena musi pochodzić z aktualnych ofert rynkowych.
+
+## Bezpłatne źródła cen
+
+Na dziś nie mamy potwierdzonego, bezpłatnego i dozwolonego API, które dostarczałoby komplet aktualnych ogłoszeń używanych części z OLX. Dlatego automatyczne wyceny cenowe pozostają nieukończone. Nie zastępujemy ich cenami nowych produktów ani fikcyjnymi wartościami. Kolejny etap wymaga znalezienia legalnego darmowego kanału cenowego albo importu porównywalnych ofert dostarczonych przez użytkownika.
