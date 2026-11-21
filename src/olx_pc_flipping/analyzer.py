@@ -8,6 +8,8 @@ from __future__ import annotations
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
+from .component_parser import parse_description
+
 CENT = Decimal("0.01")
 VALID_CONFIDENCE = {"low", "medium", "high"}
 
@@ -52,6 +54,11 @@ def analyze_listing(listing: dict[str, Any], default_costs: dict[str, Any] | Non
     if not isinstance(components, list):
         raise ValueError("components must be an array")
 
+    parsed_description = None
+    if not components and listing.get("description"):
+        parsed_description = parse_description(str(listing["description"]))
+        components = parsed_description["components"]
+
     for index, component in enumerate(components):
         if not isinstance(component, dict):
             raise ValueError(f"components[{index}] must be an object")
@@ -60,10 +67,12 @@ def analyze_listing(listing: dict[str, Any], default_costs: dict[str, Any] | Non
         if raw_price is None:
             missing_valuations.append(model)
             component_details.append({
+                "category": component.get("category", "unknown"),
                 "model": model,
                 "estimated_sale_price": None,
                 "confidence": component.get("confidence", "unknown"),
                 "comparable_listings": component.get("comparable_listings", 0),
+                "evidence": component.get("evidence"),
                 "valuation_status": "missing"
             })
             continue
@@ -78,10 +87,12 @@ def analyze_listing(listing: dict[str, Any], default_costs: dict[str, Any] | Non
             comparable_count = 0
 
         component_details.append({
+            "category": component.get("category", "unknown"),
             "model": model,
             "estimated_sale_price": float(sale_price),
             "confidence": confidence,
             "comparable_listings": comparable_count,
+            "evidence": component.get("evidence"),
             "valuation_status": "provided"
         })
 
@@ -113,6 +124,10 @@ def analyze_listing(listing: dict[str, Any], default_costs: dict[str, Any] | Non
         "maximum_purchase_price_for_target_profit": float(max_purchase_price),
         "missing_valuations": missing_valuations,
         "valuation_complete": not missing_valuations and bool(components),
+        "components_parsed_from_description": parsed_description is not None,
+        "unrecognized_categories": (
+            parsed_description["unrecognized_categories"] if parsed_description else []
+        ),
         "components": component_details
     }
 
