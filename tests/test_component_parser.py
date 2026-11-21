@@ -35,6 +35,35 @@ class ComponentParserTests(unittest.TestCase):
         self.assertEqual(motherboard["confidence"], "low")
         self.assertIn("exact board model unknown", motherboard["model"])
 
+
+    def test_realistic_polish_listing_with_messy_separators(self):
+        text = (
+            "Procesor: Intel Core i5-11400F- "
+            "Karta graficzna: NVIDIA GeForce RTX 3050 8 GB - ZOTAC GAMING- "
+            "Pamięć RAM: 16 GB DDR4- Dysk: SSD VIST NVMe 512 GB- "
+            "Płyta główna: MSI MS-7D22- "
+            "Zasilacz: Bandit Power XH-490, 650 W, 80 PLUS- "
+            "Chłodzenie procesora: Intel- "
+            "Obudowa: gamingowa, z bocznym panelem ze szkła- "
+            "Wentylatory: 3 wentylatory z przodu obudowy"
+        )
+        result = parse_description(text)
+        by_category = {item["category"]: item for item in result["components"]}
+
+        self.assertEqual(by_category["cpu"]["model"], "Core i5-11400F")
+        self.assertIn("RTX 3050", by_category["gpu"]["model"])
+        self.assertEqual(by_category["gpu"]["manufacturer"], "ZOTAC")
+        self.assertEqual(by_category["gpu"]["vram_gb"], 8)
+        self.assertEqual(by_category["ram"]["capacity_gb"], 16)
+        self.assertEqual(by_category["storage"]["manufacturer"], "VIST")
+        self.assertEqual(by_category["motherboard"]["board_identifier"], "MS-7D22")
+        self.assertIn("Bandit Power XH-490", by_category["psu"]["model"])
+        self.assertEqual(by_category["psu"]["wattage"], 650)
+        self.assertIn("80 PLUS", by_category["psu"]["efficiency"])
+        self.assertEqual(by_category["cooler"]["model"], "CPU cooler: Intel")
+        self.assertEqual(by_category["case"]["model"], "Gaming case (exact model unknown)")
+        self.assertTrue(all(item["estimated_sale_price"] is None for item in by_category.values()))
+
     def test_invalid_input_is_rejected(self):
         with self.assertRaises(ValueError):
             parse_description(None)  # type: ignore[arg-type]
