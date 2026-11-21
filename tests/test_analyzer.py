@@ -146,6 +146,25 @@ class AnalyzerTests(unittest.TestCase):
         self.assertTrue(result["meets_target"])
         self.assertIn("optional parts are excluded", result["profit_basis"])
 
+
+    def test_maximum_purchase_price_respects_minimum_roi(self):
+        components = [
+            {"category": "cpu", "model": "CPU", "estimated_sale_price": 200, "confidence": "high"},
+            {"category": "gpu", "model": "GPU", "estimated_sale_price": 300, "confidence": "high"},
+            {"category": "motherboard", "model": "Board", "estimated_sale_price": 100, "confidence": "high"},
+            {"category": "ram", "model": "RAM", "estimated_sale_price": 100, "confidence": "high"},
+            {"category": "storage", "model": "SSD", "estimated_sale_price": 100, "confidence": "high"},
+            {"category": "psu", "model": "PSU", "estimated_sale_price": 200, "confidence": "high"},
+        ]
+        result = analyze_listing(
+            {"price": 100, "components": components},
+            default_costs={"transport": 100},
+            target_profit=0,
+            minimum_roi_percent=50,
+        )
+        self.assertEqual(result["component_value_total"], 1000.0)
+        self.assertEqual(result["maximum_purchase_price_for_target_profit"], 566.67)
+
     def test_negative_price_is_rejected(self):
         with self.assertRaises(ValueError):
             analyze_listing({"price": -1, "components": []})
