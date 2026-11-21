@@ -1,15 +1,18 @@
 """Conservative profitability analysis for imported PC listings.
 
 The module does not fetch marketplace data and never invents missing prices.
-A full profit estimate is withheld until all core PC categories and their
-valuations are present.
+OLX comparables must be supplied separately and pass freshness/model checks.
+A full profit estimate is withheld until all core component categories and
+their valuations are present.
 """
 from __future__ import annotations
 
+from datetime import datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
 from .component_parser import parse_description
+from .valuation_engine import estimate_component_value
 
 CENT = Decimal("0.01")
 VALID_CONFIDENCE = {"low", "medium", "high"}
@@ -32,10 +35,14 @@ def analyze_listing(
     default_costs: dict[str, Any] | None = None,
     target_profit: Any = 0,
     minimum_roi_percent: Any = 0,
+    valuation_options: dict[str, Any] | None = None,
+    as_of: datetime | None = None,
 ) -> dict[str, Any]:
     """Analyze one listing; do not publish a full profit figure for an incomplete PC."""
     if not isinstance(listing, dict):
         raise ValueError("Each listing must be a JSON object")
+    if str(listing.get("currency", "PLN")).upper() != "PLN":
+        raise ValueError("Only PLN listings are supported by the current calculator")
 
     listing_price = money(listing.get("price"), "listing.price")
     default_costs = default_costs or {}
@@ -53,6 +60,10 @@ def analyze_listing(
         if key not in costs:
             costs[key] = money(value, f"additional_costs.{key}")
 
+    options = valuation_options or {}
+    min_comparables = int(options.get("minimum_comparable_listings", 5))
+    max_age_hours = int(options.get("maximum_valuation_age_hours", 24))
+    haircut_percent = options.get("conservative_haircut_percent", 3)
     total_extra_costs = sum(costs.values(), Decimal("0.00"))
     known_component_total = Decimal("0.00")
     component_details: list[dict[str, Any]] = []
@@ -82,46 +93,84 @@ def analyze_listing(
         if category != "unknown":
             seen_categories.add(category)
         model = str(component.get("model") or category or f"component {index + 1}")
-        confidence = str(component.get("confidence") or "low").lower()
-        if confidence not in VALID_CONFIDENCE:
-            confidence = "low"
-        if confidence == "low":
-            low_confidence_components.append(model)
 
+        identification_confidence = str(component.get("confidence") or "low").lower()
+        if identification_confidence not in VALID_CONFIDENCE:
+            identification_confidence = "low"
+
+        valuation_data = None
         raw_price = component.get("estimated_sale_price")
+        if component.get("comparables") is not None:
+            valuation_data = estimate_component_value(
+                component,
+                min_samples=min_comparables,
+                max_age_hours=max_age_hours,
+                haircut_percent=haircut_percent,
+                as_of=as_of,
+            )
+            # Fresh exact-model OLX comparisons take precedence over any stale manual figure.
+            raw_price = valuation_data.get("estimated_sale_price")
+
         if raw_price is None:
             missing_valuations.append(model)
             component_details.append({
                 "category": category,
                 "model": model,
                 "estimated_sale_price": None,
-                "confidence": confidence,
-                "comparable_listings": component.get("comparable_listings", 0),
+                "confidence": (
+                    valuation_data.get("confidence", "none")
+                    if valuation_data else "none"
+                ),
+                "identification_confidence": identification_confidence,
+                "comparable_listings": (
+                    valuation_data.get("comparables_count", 0)
+                    if valuation_data else component.get("comparable_listings", 0)
+                ),
                 "evidence": component.get("evidence"),
-                "valuation_status": "missing",
+                "valuation": valuation_data,
+                "valuation_status": (
+                    valuation_data.get("valuation_status", "missing")
+                    if valuation_data else "missing"
+                ),
             })
+            if identification_confidence == "low":
+                low_confidence_components.append(model)
             continue
 
         sale_price = money(raw_price, f"components[{index}].estimated_sale_price")
         known_component_total += sale_price
-        comparable_count = component.get("comparable_listings", 0)
+
+        if valuation_data:
+            price_confidence = valuation_data.get("confidence", "none")
+            comparable_count = valuation_data.get("comparables_count", 0)
+            valuation_status = valuation_data.get("valuation_status", "estimated")
+        else:
+            price_confidence = str(component.get("valuation_confidence") or component.get("confidence") or "low").lower()
+            if price_confidence not in VALID_CONFIDENCE:
+                price_confidence = "low"
+            comparable_count = component.get("comparable_listings", 0)
+            valuation_status = "manually_provided"
         if not isinstance(comparable_count, int) or comparable_count < 0:
             comparable_count = 0
+
+        if identification_confidence == "low" or price_confidence == "low":
+            low_confidence_components.append(model)
         component_details.append({
             "category": category,
             "model": model,
             "estimated_sale_price": float(sale_price),
-            "confidence": confidence,
+            "confidence": price_confidence,
+            "identification_confidence": identification_confidence,
             "comparable_listings": comparable_count,
             "evidence": component.get("evidence"),
-            "valuation_status": "provided",
+            "valuation": valuation_data,
+            "valuation_status": valuation_status,
         })
 
     missing_required_categories = [
         category for category in CORE_CATEGORIES if category not in seen_categories
     ]
     if parsed_description:
-        # Include parser findings for categories which the description did not identify.
         missing_required_categories = parsed_description.get(
             "missing_required_categories", missing_required_categories
         )
@@ -132,7 +181,10 @@ def analyze_listing(
 
     total_investment = listing_price + total_extra_costs
     required_profit = money(target_profit, "target_profit")
-    minimum_roi = Decimal(str(minimum_roi_percent))
+    try:
+        minimum_roi = Decimal(str(minimum_roi_percent))
+    except (InvalidOperation, TypeError, ValueError):
+        raise ValueError("minimum_roi_percent must be a valid number") from None
     if not minimum_roi.is_finite() or minimum_roi < 0:
         raise ValueError("minimum_roi_percent must be finite and >= 0")
 
@@ -151,11 +203,13 @@ def analyze_listing(
             Decimal("0.00"),
             known_component_total - total_extra_costs - required_profit,
         ))
-        meets_target = net_profit >= required_profit and roi_value >= minimum_roi
+        meets_target = (
+            net_profit >= required_profit
+            and roi_value >= minimum_roi
+            and not low_confidence_components
+        )
         analysis_status = "ready"
     else:
-        # Only partial known value is exposed. Never label it as total resale value
-        # or calculate profit from an incomplete component inventory.
         component_value_total = None
         gross_difference = None
         net_profit = None
@@ -194,7 +248,7 @@ def analyze_listing(
         "valuation_complete": valuation_complete,
         "missing_required_categories": missing_required_categories,
         "missing_valuations": missing_valuations,
-        "low_confidence_components": low_confidence_components,
+        "low_confidence_components": sorted(set(low_confidence_components)),
         "components_parsed_from_description": parsed_description is not None,
         "unrecognized_categories": (
             parsed_description["unrecognized_categories"] if parsed_description else []
@@ -214,9 +268,16 @@ def analyze_import(payload: dict[str, Any], config: dict[str, Any] | None = None
         raise ValueError("listings must be an array")
 
     analysis_config = (config or {}).get("analysis", {})
+    if not isinstance(analysis_config, dict):
+        raise ValueError("config.analysis must be an object")
     default_costs = analysis_config.get("default_additional_costs", {})
     target_profit = analysis_config.get("minimum_target_profit", 0)
     minimum_roi = analysis_config.get("minimum_roi_percent", 0)
+    valuation_options = {
+        "minimum_comparable_listings": analysis_config.get("minimum_comparable_listings", 5),
+        "maximum_valuation_age_hours": analysis_config.get("maximum_valuation_age_hours", 24),
+        "conservative_haircut_percent": analysis_config.get("conservative_haircut_percent", 3),
+    }
 
     results = [
         analyze_listing(
@@ -224,6 +285,7 @@ def analyze_import(payload: dict[str, Any], config: dict[str, Any] | None = None
             default_costs=default_costs,
             target_profit=target_profit,
             minimum_roi_percent=minimum_roi,
+            valuation_options=valuation_options,
         )
         for item in listings
     ]
