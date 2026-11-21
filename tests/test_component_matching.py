@@ -47,8 +47,8 @@ class ComponentMatchingTests(unittest.TestCase):
         self.assertEqual(result["reason"], "storage_type_required")
 
     def test_gpu_cross_model_requires_benchmark_and_vram(self):
-        target = {"category": "gpu", "model": "GPU A", "benchmark_score": 10000, "vram_gb": 8}
-        candidate = {"category": "gpu", "model": "GPU B", "benchmark_score": 10100}
+        target = {"category": "gpu", "model": "GPU A", "benchmark_score": 10000, "benchmark_name": "gaming", "vram_gb": 8}
+        candidate = {"category": "gpu", "model": "GPU B", "benchmark_score": 10100, "benchmark_name": "gaming"}
         result = match_comparable(target, candidate)
         self.assertFalse(result["matched"])
         self.assertEqual(result["reason"], "vram_required_for_cross_model_match")
