@@ -55,6 +55,8 @@ class ComponentParserTests(unittest.TestCase):
         self.assertEqual(by_category["gpu"]["manufacturer"], "ZOTAC")
         self.assertEqual(by_category["gpu"]["vram_gb"], 8)
         self.assertEqual(by_category["ram"]["capacity_gb"], 16)
+        self.assertIsNone(by_category["ram"]["stick_count"])
+        self.assertFalse(by_category["ram"]["stick_count_known"])
         self.assertEqual(by_category["storage"]["manufacturer"], "VIST")
         self.assertEqual(by_category["motherboard"]["board_identifier"], "MS-7D22")
         self.assertIn("Bandit Power XH-490", by_category["psu"]["model"])
@@ -63,6 +65,36 @@ class ComponentParserTests(unittest.TestCase):
         self.assertEqual(by_category["cooler"]["model"], "CPU cooler: Intel")
         self.assertEqual(by_category["case"]["model"], "Gaming case (exact model unknown)")
         self.assertTrue(all(item["estimated_sale_price"] is None for item in by_category.values()))
+
+
+    def test_full_user_supplied_description_including_typo(self):
+        text = (
+            "Sprzedam komputer gamingowy, w pełni sprawny i gotowy do użytkowania. "
+            "Procesor: Intel Core i5-11400F- Karta graficzna: NVIDIA GeForce RTX 3050 8 GB - "
+            "ZOTAC GAMING- Pamięć RAM: 16 GB DDR4- Dysk: SSD VIST NVMe 512 GB- "
+            "Płyta główna: MSI MS-7D22- Zasilacz: Bandit Power XH-490, 650 W, 80 PLUS- "
+            "Chtodzenie procesora: Intel- Obudowa: gamingowa, z bocznym panelem ze szkła- "
+            "Wentylatory: 3 wentylatory z przodu obudowy. Windows 11 Home."
+        )
+        result = parse_description(text)
+        by_category = {item["category"]: item for item in result["components"]}
+
+        self.assertEqual(by_category["cpu"]["model"], "Intel Core i5-11400F")
+        self.assertEqual(by_category["gpu"]["manufacturer"], "ZOTAC")
+        self.assertEqual(by_category["gpu"]["gpu_model"], "RTX 3050")
+        self.assertEqual(by_category["gpu"]["vram_gb"], 8)
+        self.assertEqual(by_category["ram"]["capacity_gb"], 16)
+        self.assertIsNone(by_category["ram"]["stick_count"])
+        self.assertEqual(by_category["storage"]["manufacturer"], "VIST")
+        self.assertIn("NVMe SSD", by_category["storage"]["model"])
+        self.assertEqual(by_category["motherboard"]["board_identifier"], "MS-7D22")
+        self.assertIn("Bandit Power XH-490", by_category["psu"]["model"])
+        self.assertEqual(by_category["psu"]["wattage"], 650)
+        self.assertTrue(by_category["psu"]["quality_assessment"].startswith("unknown"))
+        self.assertEqual(by_category["cooler"]["model"], "CPU cooler: Intel")
+        self.assertEqual(by_category["fans"]["count"], 3)
+        self.assertFalse(result["missing_required_categories"])
+        self.assertIsNone(by_category["gpu"]["estimated_sale_price"])
 
     def test_invalid_input_is_rejected(self):
         with self.assertRaises(ValueError):
