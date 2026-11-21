@@ -84,6 +84,12 @@ function cardFor(row) {
     if (component.valuation && component.valuation.reason) {
       item.append(el("small", "", "Wycena: " + component.valuation.reason));
     }
+    if (component.attributes && Object.keys(component.attributes).length) {
+      const attrs = Object.entries(component.attributes)
+        .filter((entry) => entry[1] !== null && entry[1] !== undefined && entry[1] !== false)
+        .map((entry) => entry[0] + ": " + entry[1]).join(" · ");
+      if (attrs) item.append(el("small", "", attrs));
+    }
     if (component.evidence) item.append(el("small", "", "Źródło rozpoznania: " + component.evidence));
     componentList.append(item);
   }
