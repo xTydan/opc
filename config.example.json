@@ -28,7 +28,13 @@
     },
     "minimum_comparable_listings": 5,
     "maximum_valuation_age_hours": 24,
-    "conservative_haircut_percent": 3
+    "conservative_haircut_percent": 3,
+    "benchmark_names": {
+      "cpu": "cpu_mark",
+      "gpu": "gpu_3dmark",
+      "storage": "storage_index",
+      "ram": "memory_index"
+    }
   },
   "automation": {
     "interval_minutes": 60,
