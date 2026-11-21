@@ -11,7 +11,7 @@ Prywatny projekt do wyszukiwania potencjalnie opłacalnych komputerów używanyc
 - Zachowywanie fragmentu tekstu, który uzasadnia rozpoznanie.
 - Kalkulator kosztów, potencjalnego zysku, ROI i maksymalnej ceny zakupu.
 - Import zbiorczy JSON i CSV (separator przecinek lub średnik; polskie formaty cen).
-- Konserwatywny silnik wyceny z podanych porównywalnych ogłoszeń OLX: dokładny model, status aktywny, odczyt z ostatnich 24 godzin, minimum 5 porównań, filtrowanie wartości odstających i korekta bezpieczeństwa.
+- Konserwatywny silnik wyceny z podanych porównywalnych ogłoszeń OLX: dopasowanie dokładnego modelu lub podobieństwa specyfikacji (np. pojemność/interfejs SSD, generacja i pojemność RAM, wydajność GPU/CPU z wynikiem benchmarku), aktywny status, odczyt z ostatnich 24 godzin, minimum 5 porównań, filtrowanie wartości odstających i korekta bezpieczeństwa.
 - Zabezpieczenie: zysk i ROI nie są wyświetlane, jeśli brakuje wyceny albo kluczowej kategorii sprzętu.
 - Panel www w \`docs/\`, który importuje raport JSON, filtruje i sortuje oferty.
 - Testy Pythona i kontrola składni JavaScript w GitHub Actions.
@@ -19,7 +19,7 @@ Prywatny projekt do wyszukiwania potencjalnie opłacalnych komputerów używanyc
 
 **Jeszcze niegotowe:**
 - Automatyczne pobieranie cudzych ogłoszeń OLX.
-- Automatyczne zbieranie porównywalnych ogłoszeń OLX; silnik wyceniania jest gotowy na import takich danych, ale nie ma jeszcze zatwierdzonego źródła automatycznego pobierania.
+- Automatyczne zbieranie porównywalnych ogłoszeń OLX; silnik wyceniania obsługuje już dopasowanie specyfikacji, ale potrzebuje danych porównawczych dostarczonych z dozwolonego źródła.
 - Trwała baza historii ofert i cen.
 - Harmonogram cyklicznych skanów oraz alerty Telegram.
 
@@ -120,7 +120,7 @@ Silnik wyceniania przyjmuje porównania wewnątrz obiektu komponentu. Przykłado
 }
 ```
 
-Każda oferta musi mieć dokładny model, status aktywny, cenę PLN, czas odczytu z określoną strefą czasową i identyfikator lub URL. Domyślnie do wyceny potrzeba minimum 5 aktualnych porównań z OLX. Jeśli ich brakuje, program nie wymyśla ceny. W przypadku podania `comparables` ich wynik ma pierwszeństwo przed ręcznie wpisanym `estimated_sale_price`.
+Każda oferta musi mieć kategorię, status aktywny, cenę PLN, czas odczytu z określoną strefą czasową i identyfikator lub URL. Można dopasować dokładny model albo podać specyfikacje w polach porównawczych. Przykładowo SSD może być porównany z inną marką, jeśli zgadzają się typ/interfejs i zbliżona pojemność. GPU/CPU wymagają porównywalnego wyniku benchmarku; sama nazwa rodziny lub liczba watów nie wystarcza. Zasilacze różnych marek wymagają niezależnej oceny jakości. Korekty cen między modelami są ograniczone, a wynik dopasowania specyfikacji nie otrzymuje najwyższego poziomu pewności. Domyślnie do wyceny potrzeba minimum 5 aktualnych porównań z OLX. Jeśli ich brakuje, program nie wymyśla ceny. W przypadku podania `comparables` ich wynik ma pierwszeństwo przed ręcznie wpisanym `estimated_sale_price`.
 
 ## Zasady wyceny
 
@@ -140,3 +140,15 @@ $env:PYTHONPATH = "src"
 python -m unittest discover -s tests -v
 node --check docs/app.js
 \`\`\`
+
+
+### Dopasowanie między różnymi modelami
+
+Silnik nie wymaga tej samej marki dla każdej części. Dopasowuje porównania według parametrów ważnych dla danej kategorii. Przykładowe pola, które można umieścić bezpośrednio w rekordzie porównawczym:
+- SSD: `capacity_gb`, `storage_type`, `interface`, opcjonalnie `performance_score`.
+- RAM: `memory_type`, `capacity_gb`, opcjonalnie `speed_mhz`.
+- CPU/GPU: `benchmark_score`; dla GPU dodatkowo `vram_gb`, dla CPU opcjonalnie `socket`.
+- Płyta główna: `socket`, `memory_type`, `form_factor`, opcjonalnie `chipset_tier`.
+- Zasilacz: `wattage` i niezależnie oceniony `quality_tier`.
+
+Nieznane parametry nie są dopowiadane. Gdy nie ma wystarczających danych, silnik odrzuca porównanie lub pozostawia wycenę pustą. Korekta ceny przy dopasowaniu specyfikacji jest celowo ograniczona do 15% w górę lub w dół; to bezpiecznik, a nie model pełnej ekonomicznej wyceny. Wyniki benchmarków i oceny jakości muszą pochodzić z wiarygodnego, udokumentowanego źródła.
