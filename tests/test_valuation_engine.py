@@ -60,6 +60,15 @@ class ValuationEngineTests(unittest.TestCase):
         self.assertEqual(result["excluded"]["different_model"], 1)
         self.assertEqual(result["excluded"]["stale_or_future"], 1)
 
+    def test_counts_all_rejected_different_models(self):
+        offers = [comparable(i, 700 + i * 10, model=f"Other GPU {i}") for i in range(3)]
+        result = estimate_component_value(
+            {"model": "ZOTAC RTX 3050 8GB", "comparables": offers},
+            min_samples=2,
+            as_of=AS_OF,
+        )
+        self.assertEqual(result["excluded"]["different_model"], 3)
+
     def test_no_estimate_when_too_few_comparables(self):
         offers = [comparable(1, 700), comparable(2, 750)]
         result = estimate_component_value(
