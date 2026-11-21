@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Analyze an imported JSON file of PC listings."""
+"""Analyze a batch of listings imported from JSON or CSV."""
 from __future__ import annotations
 
 import argparse
@@ -11,20 +11,21 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from olx_pc_flipping.analyzer import analyze_import  # noqa: E402
+from olx_pc_flipping.importers import load_import_file  # noqa: E402
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Analyze imported PC listings.")
-    parser.add_argument("input", type=Path, help="Path to listings JSON")
+    parser = argparse.ArgumentParser(description="Analyze imported PC listings from JSON or CSV.")
+    parser.add_argument("input", type=Path, help="Path to listings .json or .csv")
     parser.add_argument("--config", type=Path, default=ROOT / "config.example.json")
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
 
     try:
-        payload = json.loads(args.input.read_text(encoding="utf-8"))
+        payload = load_import_file(args.input)
         config = json.loads(args.config.read_text(encoding="utf-8")) if args.config.exists() else {}
         report = analyze_import(payload, config)
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 
