@@ -186,6 +186,8 @@ def _extract_gpu(text: str, found: list[dict[str, Any]]) -> None:
             context,
             manufacturer=manufacturer,
             gpu_model=model_core,
+            gpu_family="NVIDIA GeForce" if re.search(r"RTX|GTX", model_core, re.I) else "AMD Radeon",
+            gpu_series=re.sub(r"^(?:NVIDIA|GeForce|AMD|Radeon)\\s*", "", model_core, flags=re.I),
             vram_gb=vram,
             product_line="Gaming" if gaming else None,
             board_variant=board_variant,
@@ -389,7 +391,18 @@ def parse_description(description: str) -> dict[str, Any]:
     for pattern in CPU_PATTERNS:
         match = pattern.search(text)
         if match:
-            _add(found, "cpu", match.group(0), "high", match.group(0))
+            cpu_model = _clean(match.group(0))
+            cpu_details: dict[str, Any] = {"platform_family": "Intel Core" if re.search(r"Intel|Core\\s+i", cpu_model, re.I) else "AMD Ryzen"}
+            intel_match = re.search(r"i[3579]\\s*[- ]?\\s*(\\d{4,5})([A-Z]{0,3})", cpu_model, re.I)
+            ryzen_match = re.search(r"Ryzen\\s+[3579]\\s+(\\d{4,5})([A-Z]{0,4})", cpu_model, re.I)
+            if intel_match:
+                digits = intel_match.group(1)
+                cpu_details["model_number"] = digits + (intel_match.group(2) or "").upper()
+                cpu_details["generation"] = int(digits[:2]) if len(digits) == 5 else int(digits[0])
+            elif ryzen_match:
+                cpu_details["model_number"] = ryzen_match.group(1) + (ryzen_match.group(2) or "").upper()
+                cpu_details["model_series"] = ryzen_match.group(1)[0]
+            _add(found, "cpu", cpu_model, "high", match.group(0), **cpu_details)
             break
 
     _extract_gpu(text, found)
