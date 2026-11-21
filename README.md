@@ -64,6 +64,9 @@ Przygotuj plik JSON według struktury \`data/listings.example.json\`. Każdy rek
 
 \`\`\`powershell
 py scripts/analyze_import.py my-listings.json --output reports/report.json
+
+# Opcjonalnie: dołącz lokalną bazę benchmarków z udokumentowaną licencją
+py scripts/analyze_import.py my-listings.json --benchmarks data/my-benchmarks.json --output reports/report.json
 \`\`\`
 
 Otwórz \`docs/index.html\` w przeglądarce i wczytaj \`reports/report.json\`.
@@ -172,3 +175,15 @@ Ważne ograniczenie: benchmarki opisują wydajność, a nie wartość rynkową. 
 ## Bezpłatne źródła cen
 
 Na dziś nie mamy potwierdzonego, bezpłatnego i dozwolonego API, które dostarczałoby komplet aktualnych ogłoszeń używanych części z OLX. Dlatego automatyczne wyceny cenowe pozostają nieukończone. Nie zastępujemy ich cenami nowych produktów ani fikcyjnymi wartościami. Kolejny etap wymaga znalezienia legalnego darmowego kanału cenowego albo importu porównywalnych ofert dostarczonych przez użytkownika.
+
+
+### Użycie benchmarków przy dopasowaniu CPU/GPU
+
+Obsługa benchmarków jest już podłączona do analizatora. Przekaż plik przez `--benchmarks`, a w `config.json` ustaw identyfikator testu dla kategorii, np. `analysis.benchmark_names.gpu = "gpu_3dmark"`. Nazwa testu musi być taka sama dla docelowego podzespołu i ofert porównawczych — wyniki różnych metodologii nie są mieszane. Wynik jest dopisywany do komponentu i do raportu wraz ze źródłem, licencją, datą aktualizacji, liczbą próbek i linkiem. Dopasowanie między różnymi modelami CPU/GPU zostanie odrzucone, jeśli nie ma zgodnych wyników tego samego benchmarku. 
+
+Przykład:
+```powershell
+py scripts/analyze_import.py my-listings.json --config config.json --benchmarks data/my-benchmarks.json --output reports/report.json
+```
+
+Ważne: przykładowe nazwy `cpu_mark`, `gpu_3dmark`, `storage_index`, `memory_index` w konfiguracji są tylko identyfikatorami oczekiwanych kolumn w Twoim zbiorze. Nie oznaczają, że dołączona przykładowa baza zawiera rzeczywiste lub kompletne wyniki. Dataset musi zawierać te same identyfikatory i rzeczywiste wyniki ze wskazanego źródła.
