@@ -1,43 +1,116 @@
 # OLX PC Flipping Scanner
 
-Projekt do wyszukiwania potencjalnie opłacalnych komputerów używanych i szacowania wartości ich podzespołów przy odsprzedaży osobno.
+Prywatny projekt do wyszukiwania potencjalnie opłacalnych komputerów używanych i szacowania wartości ich podzespołów przy odsprzedaży osobno.
 
-## Założenia
+## Aktualny status
 
-- Użytkownik definiuje frazy i filtry wyszukiwania.
-- Dane ogłoszeń są dostarczane do programu z dopuszczonego źródła lub przez import pliku.
-- Program analizuje tytuł, cenę, lokalizację, datę i pełny opis.
-- Podzespoły są wyceniane na podstawie rzeczywistych, porównywalnych danych z OLX, z widoczną liczbą porównań i datą odświeżenia.
-- Program oblicza konserwatywny przychód, koszty, potencjalny zysk, ROI i maksymalną cenę zakupu.
-- Program nie traktuje ceny ofertowej jako potwierdzonej ceny transakcyjnej.
-- Brak danych lub niepewna identyfikacja nie są zastępowane zgadywaną ceną.
+**Gotowe:**
+- Parser podzespołów z polskich opisów ogłoszeń.
+- Obsługa typowych literówek, łamania linii i nietypowych separatorów.
+- Rozpoznawanie CPU, GPU, RAM, płyt głównych, dysków, zasilaczy, chłodzeń, obudów i wentylatorów.
+- Zachowywanie fragmentu tekstu, który uzasadnia rozpoznanie.
+- Kalkulator kosztów, potencjalnego zysku, ROI i maksymalnej ceny zakupu.
+- Zabezpieczenie: zysk i ROI nie są wyświetlane, jeśli brakuje wyceny albo kluczowej kategorii sprzętu.
+- Panel www w \`docs/\`, który importuje raport JSON, filtruje i sortuje oferty.
+- Testy Pythona i kontrola składni JavaScript w GitHub Actions.
+- Workflow publikacji panelu przez GitHub Pages.
 
-## Status projektu
+**Jeszcze niegotowe:**
+- Automatyczne pobieranie cudzych ogłoszeń OLX.
+- Automatyczne porównywanie cen części na OLX.
+- Trwała baza historii ofert i cen.
+- Harmonogram cyklicznych skanów oraz alerty Telegram.
 
-**Etap 1 — szkielet i format danych.**
+Automatyczne pobieranie i przetwarzanie cudzych treści OLX wymaga ustalenia dozwolonego sposobu dostępu z OLX. Obecny projekt nie obchodzi zabezpieczeń serwisu i nie wykonuje scraperów. Architektura importu jest przygotowana tak, aby można było później podłączyć zatwierdzone źródło danych.
 
-Na tym etapie przygotowujemy import danych oraz kalkulator. Nie ma jeszcze modułu pobierającego ogłoszenia z OLX. Automatyczne pozyskiwanie i przetwarzanie cudzych ogłoszeń wymaga wcześniej ustalenia dozwolonego sposobu dostępu z OLX.
+## Struktura projektu
 
-## Struktura
-
-- `config.example.json` — przykładowe ustawienia wyszukiwań i kalkulacji.
-- `data/listings.example.json` — przykładowy format importu (dane demonstracyjne).
-- `src/olx_pc_flipping/analyzer.py` — kalkulator opłacalności.
-- `scripts/analyze_import.py` — analiza pliku JSON z ofertami.
-- `tests/` — testy jednostkowe.
+- \`config.example.json\` — przykładowe frazy i ustawienia kalkulatora.
+- \`data/listings.example.json\` — przykładowy import (wartości demonstracyjne, nie aktualny rynek).
+- \`src/olx_pc_flipping/component_parser.py\` — parser podzespołów.
+- \`src/olx_pc_flipping/analyzer.py\` — kalkulator opłacalności.
+- \`scripts/parse_description.py\` — parser pojedynczego pliku TXT.
+- \`scripts/analyze_import.py\` — analiza paczki ogłoszeń JSON.
+- \`docs/\` — statyczny panel wyników.
+- \`tests/\` — testy jednostkowe.
 
 ## Uruchomienie lokalne (Windows)
 
-Wymagany Python 3.11 lub nowszy.
+Wymagany Python 3.11 lub nowszy. Kalkulator korzysta z biblioteki standardowej Pythona; nie trzeba instalować dodatkowych paczek.
 
-```powershell
+W PowerShell, po pobraniu repozytorium:
+
+\`\`\`powershell
 py -m venv .venv
 .venv\Scripts\Activate.ps1
-py scripts/analyze_import.py data/listings.example.json --output reports/example-report.json
-```
+$env:PYTHONPATH = "src"
+\`\`\`
 
-Kalkulator korzysta wyłącznie z biblioteki standardowej Pythona.
+### Test parsera na opisie tekstowym
 
-## Ważne
+Zapisz opis komputera do pliku, np. \`my-description.txt\`, a następnie:
 
-Plik przykładowy zawiera dane demonstracyjne, a nie aktualne oferty OLX ani aktualne wyceny rynkowe. Nie należy podejmować na ich podstawie decyzji zakupowych.
+\`\`\`powershell
+py scripts/parse_description.py my-description.txt --output parsed-components.json
+\`\`\`
+
+### Analiza paczki ofert
+
+Przygotuj plik JSON według struktury \`data/listings.example.json\`. Każdy rekord powinien zawierać przynajmniej cenę zakupu oraz opis lub listę podzespołów.
+
+\`\`\`powershell
+py scripts/analyze_import.py my-listings.json --output reports/report.json
+\`\`\`
+
+Otwórz \`docs/index.html\` w przeglądarce i wczytaj \`reports/report.json\`.
+
+### Publikacja panelu na GitHub Pages
+
+Workflow \`.github/workflows/pages.yml\` publikuje zawartość \`docs/\` po zmianach na gałęzi \`main\`. W ustawieniach repozytorium GitHub Pages musi być użyte źródło **GitHub Actions**. Po udanym wdrożeniu strona będzie dostępna pod adresem GitHub Pages repozytorium.
+
+## Format importu
+
+Główny format to JSON:
+
+\`\`\`json
+{
+  "schema_version": 1,
+  "source": "manual",
+  "exported_at": "2026-11-21T12:00:00+01:00",
+  "listings": [
+    {
+      "id": "listing-001",
+      "title": "Komputer gamingowy",
+      "url": "https://www.olx.pl/d/oferta/...",
+      "price": 1500,
+      "currency": "PLN",
+      "location": "Bielsko-Biała",
+      "date_added": null,
+      "collected_at": "2026-11-21T12:00:00+01:00",
+      "status": "unverified",
+      "description": "Pełny opis podzespołów..."
+    }
+  ]
+}
+\`\`\`
+
+Nie wpisuj tekstu typu \`1 500 zł\` w pole \`price\`; użyj liczby \`1500\`. Nie dodawaj do publicznego repozytorium prywatnych danych sprzedawców ani niepublikowanych eksportów.
+
+## Zasady wyceny
+
+- Ceny ofertowe nie są potwierdzonymi cenami sprzedaży.
+- Nieznany model nie otrzymuje ceny na podstawie zgadywania.
+- Wycena powinna mieć datę aktualizacji, liczbę porównywalnych ofert i poziom pewności.
+- Brak kluczowego podzespołu lub jego wyceny powoduje status niekompletnej analizy; program nie pokazuje wtedy zysku ani ROI.
+- Zasilacz nie jest uznawany za jakościowy wyłącznie na podstawie oznaczenia 80 PLUS.
+- Wartości w plikach \`*.example.json\` są demonstracyjne.
+
+## Testy
+
+GitHub Actions uruchamia:
+
+\`\`\`powershell
+$env:PYTHONPATH = "src"
+python -m unittest discover -s tests -v
+node --check docs/app.js
+\`\`\`
