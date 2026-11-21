@@ -62,6 +62,15 @@ GPU_BRAND_PATTERN = re.compile(
     re.I,
 )
 GPU_VRAM_PATTERN = re.compile(r"\b(4|6|8|10|12|16|20|24)\s*GB\b", re.I)
+GPU_VARIANT_PATTERN = re.compile(
+    r"\b(TWIN\s*EDGE|AMP\s*EXTREME|GAMING\s*TRIO|GAMING\s*X|GAMING\s*OC|"
+    r"ROG\s*STRIX|TUF\s*GAMING|VENTUS\s*[23]?X|AORUS\s*(?:MASTER|ELITE)?|"
+    r"WINDFORCE|EAGLE|NITRO\+?|PULSE|RED\s*DEVIL|HELLHOUND|PHANTOM\s*GAMING|"
+    r"CHALLENGER|MECH|ARMOR|DUAL|GHOST|TRINITY)\b",
+    re.I,
+)
+
+RAM_SPEED_PATTERN = re.compile(r"\b(?P<speed>1600|1866|2133|2400|2666|2933|3000|3200|3600|4000|4400|4800|5200|5600|6000|6200|6400|6800|7000|7200|7600|8000)\s*MHz\b", re.I)
 
 RAM_PATTERNS = [
     re.compile(
@@ -151,6 +160,8 @@ def _extract_gpu(text: str, found: list[dict[str, Any]]) -> None:
         brand_match = GPU_BRAND_PATTERN.search(context)
         manufacturer = brand_match.group(1).upper() if brand_match else None
         gaming = bool(re.search(r"\bGAMING\b", context, re.I))
+        variant_match = GPU_VARIANT_PATTERN.search(context)
+        board_variant = _clean(variant_match.group(1)).upper() if variant_match else None
 
         # VRAM must be adjacent to the GPU mention; do not borrow the PC's RAM size.
         after_model = text[match.end(): min(len(text), match.end() + 28)]
@@ -162,7 +173,9 @@ def _extract_gpu(text: str, found: list[dict[str, Any]]) -> None:
             display_model = f"{manufacturer} {display_model}"
         if vram:
             display_model += f" {vram}GB"
-        if gaming and manufacturer:
+        if board_variant:
+            display_model += f" {board_variant}"
+        elif gaming and manufacturer:
             display_model += " Gaming series"
 
         _add(
@@ -175,7 +188,8 @@ def _extract_gpu(text: str, found: list[dict[str, Any]]) -> None:
             gpu_model=model_core,
             vram_gb=vram,
             product_line="Gaming" if gaming else None,
-            exact_variant_known=False,
+            board_variant=board_variant,
+            exact_variant_known=board_variant is not None,
         )
         return
 
@@ -193,7 +207,12 @@ def _extract_ram(text: str, found: list[dict[str, Any]]) -> None:
                 continue
             seen.add(key)
 
+            nearby = text[match.start():min(len(text), match.end() + 32)]
+            speed_match = RAM_SPEED_PATTERN.search(nearby)
+            speed = int(speed_match.group("speed")) if speed_match else None
             model = f"{count}x{size}GB {memory_type}" if count else f"{size}GB {memory_type}"
+            if speed:
+                model += f" {speed}MHz"
             _add(
                 found,
                 "ram",
@@ -204,6 +223,7 @@ def _extract_ram(text: str, found: list[dict[str, Any]]) -> None:
                 memory_type=memory_type,
                 stick_count=count,
                 stick_count_known=count is not None,
+                speed_mhz=speed,
             )
 
 
