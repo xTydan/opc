@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>OLX PC Flipping Scanner</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">PC</div>
+      <div>
+        <div class="brand-name">PC FLIPPING SCANNER</div>
+        <div class="brand-subtitle">Panel analiz używanych komputerów</div>
+      </div>
+    </div>
+    <span class="status-pill"><span class="status-dot"></span> Panel gotowy do importu</span>
+  </header>
+  <main class="shell">
+    <section class="intro">
+      <div>
+        <p class="eyebrow">OLX · USED HARDWARE · PROFIT ANALYSIS</p>
+        <h1>Znajdź komputer,<br><span>który warto rozebrać na części.</span></h1>
+        <p class="intro-copy">Wczytaj raport JSON wygenerowany przez analizator. Nie pokazujemy zysku, jeśli brakuje kluczowych podzespołów lub ich wiarygodnych wycen.</p>
+      </div>
+      <div class="import-panel">
+        <label class="file-picker" for="report-file">
+          <span class="file-icon">↑</span>
+          <span><strong>Wczytaj raport JSON</strong><small>Wybierz plik wygenerowany przez analyze_import.py</small></span>
+        </label>
+        <input id="report-file" type="file" accept=".json,application/json">
+        <p id="file-status" class="file-status">Nie wczytano jeszcze raportu.</p>
+        <button id="clear-button" class="button button-ghost" type="button" disabled>Wyczyść wyniki</button>
+      </div>
+    </section>
+    <section class="metric-grid" aria-label="Podsumowanie">
+      <article class="metric-card"><span>Zaimportowane oferty</span><strong id="metric-total">0</strong><small>Wszystkie rekordy w raporcie</small></article>
+      <article class="metric-card"><span>Pełna analiza</span><strong id="metric-ready">0</strong><small>Komplet komponentów i wycen</small></article>
+      <article class="metric-card"><span>Spełniają próg</span><strong id="metric-target">0</strong><small>Minimalny zysk i ROI z konfiguracji</small></article>
+      <article class="metric-card"><span>Braki danych</span><strong id="metric-missing">0</strong><small>Wymagają uzupełnienia</small></article>
+    </section>
+    <section class="results-section">
+      <div class="section-heading">
+        <div><p class="eyebrow">RANKING OFERT</p><h2>Analizowane komputery</h2></div>
+        <span id="report-meta" class="report-meta">Oczekiwanie na plik</span>
+      </div>
+      <div class="toolbar">
+        <label class="search-box"><span>⌕</span><input id="search-input" type="search" placeholder="Szukaj modelu, tytułu lub lokalizacji…" disabled></label>
+        <select id="status-filter" disabled aria-label="Filtr statusu">
+          <option value="all">Wszystkie wyniki</option><option value="ready">Pełna analiza</option><option value="incomplete">Niekompletne dane</option><option value="target">Spełniają próg</option>
+        </select>
+        <select id="sort-select" disabled aria-label="Sortowanie">
+          <option value="profit">Najwyższy zysk</option><option value="price">Najniższa cena zakupu</option><option value="roi">Najwyższy ROI</option><option value="newest">Najnowszy import</option>
+        </select>
+      </div>
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">⌁</div><h3>Tu pojawią się znalezione okazje</h3>
+        <p>Najpierw uruchom analizę pliku JSON w Pythonie, a następnie wczytaj raport tutaj.</p>
+      </div>
+      <div id="results-list" class="results-list" aria-live="polite"></div>
+    </section>
+    <footer><span>OLX PC Flipping Scanner · prywatny panel analityczny</span><span>Ceny ofertowe nie są potwierdzonymi cenami transakcyjnymi.</span></footer>
+  </main>
+</body>
+</html>
