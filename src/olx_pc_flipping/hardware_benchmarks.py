@@ -51,10 +51,21 @@ def load_benchmark_dataset(path: str | Path) -> dict[str, Any]:
     elif file_path.suffix.casefold() == ".csv":
         with file_path.open(encoding="utf-8-sig", newline="") as stream:
             rows = list(csv.DictReader(stream))
+        if not rows:
+            raise ValueError("Benchmark CSV contains no records")
+        metadata_fields = ("source", "license", "updated_at")
+        for field in metadata_fields:
+            if not str(rows[0].get(field) or "").strip():
+                raise ValueError(
+                    f"Benchmark CSV requires metadata columns: {', '.join(metadata_fields)}"
+                )
+            expected = str(rows[0][field]).strip()
+            if any(str(row.get(field) or "").strip() != expected for row in rows):
+                raise ValueError(f"Benchmark CSV metadata column '{field}' must be consistent across rows")
         payload = {
-            "source": "CSV import",
-            "license": "",
-            "updated_at": "",
+            "source": rows[0]["source"],
+            "license": rows[0]["license"],
+            "updated_at": rows[0]["updated_at"],
             "records": rows,
         }
     else:
