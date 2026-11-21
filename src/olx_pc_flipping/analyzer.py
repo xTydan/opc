@@ -224,6 +224,7 @@ def analyze_listing(
     return {
         "id": listing.get("id"),
         "title": listing.get("title"),
+        "description": listing.get("description"),
         "url": listing.get("url"),
         "location": listing.get("location"),
         "date_added": listing.get("date_added"),
