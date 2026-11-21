@@ -68,7 +68,9 @@ def analyze_listing(
     known_component_total = Decimal("0.00")
     component_details: list[dict[str, Any]] = []
     missing_valuations: list[str] = []
+    missing_optional_valuations: list[str] = []
     low_confidence_components: list[str] = []
+    low_confidence_core_components: list[str] = []
 
     components = listing.get("components") or []
     if not isinstance(components, list):
@@ -112,7 +114,10 @@ def analyze_listing(
             raw_price = valuation_data.get("estimated_sale_price")
 
         if raw_price is None:
-            missing_valuations.append(model)
+            if category in CORE_CATEGORIES or category == "unknown":
+                missing_valuations.append(model)
+            else:
+                missing_optional_valuations.append(model)
             component_details.append({
                 "category": category,
                 "model": model,
@@ -135,6 +140,8 @@ def analyze_listing(
             })
             if identification_confidence == "low":
                 low_confidence_components.append(model)
+                if category in CORE_CATEGORIES:
+                    low_confidence_core_components.append(model)
             continue
 
         sale_price = money(raw_price, f"components[{index}].estimated_sale_price")
@@ -155,6 +162,8 @@ def analyze_listing(
 
         if identification_confidence == "low" or price_confidence == "low":
             low_confidence_components.append(model)
+            if category in CORE_CATEGORIES:
+                low_confidence_core_components.append(model)
         component_details.append({
             "category": category,
             "model": model,
@@ -206,7 +215,7 @@ def analyze_listing(
         meets_target = (
             net_profit >= required_profit
             and roi_value >= minimum_roi
-            and not low_confidence_components
+            and not low_confidence_core_components
         )
         analysis_status = "ready"
     else:
@@ -249,7 +258,13 @@ def analyze_listing(
         "valuation_complete": valuation_complete,
         "missing_required_categories": missing_required_categories,
         "missing_valuations": missing_valuations,
+        "missing_optional_valuations": missing_optional_valuations,
         "low_confidence_components": sorted(set(low_confidence_components)),
+        "low_confidence_core_components": sorted(set(low_confidence_core_components)),
+        "profit_basis": (
+            "Core component value only; unvalued optional parts are excluded conservatively."
+            if missing_optional_valuations else "All detected and required components valued."
+        ),
         "components_parsed_from_description": parsed_description is not None,
         "unrecognized_categories": (
             parsed_description["unrecognized_categories"] if parsed_description else []
