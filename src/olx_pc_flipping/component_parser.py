@@ -187,7 +187,7 @@ def _extract_gpu(text: str, found: list[dict[str, Any]]) -> None:
             manufacturer=manufacturer,
             gpu_model=model_core,
             gpu_family="NVIDIA GeForce" if re.search(r"RTX|GTX", model_core, re.I) else "AMD Radeon",
-            gpu_series=re.sub(r"^(?:NVIDIA|GeForce|AMD|Radeon)\\s*", "", model_core, flags=re.I),
+            gpu_series=re.sub(r"^(?:NVIDIA|GeForce|AMD|Radeon)\s*", "", model_core, flags=re.I),
             vram_gb=vram,
             product_line="Gaming" if gaming else None,
             board_variant=board_variant,
