@@ -82,5 +82,51 @@ class ValuationEngineTests(unittest.TestCase):
         self.assertEqual(result["comparables_count"], 5)
 
 
+    def test_matches_cross_brand_nvme_drives_by_capacity_and_interface(self):
+        offers = [{
+            "id": f"ssd-{i}", "marketplace": "olx", "category": "storage",
+            "model": f"Brand{i} 1TB NVMe SSD", "price": 300 + i * 10,
+            "status": "active", "collected_at": "2026-11-21T11:00:00+00:00",
+            "capacity_gb": 1000, "storage_type": "NVMe SSD", "interface": "NVMe",
+        } for i in range(6)]
+        target = {
+            "category": "storage", "model": "VIST 1TB NVMe SSD",
+            "capacity_gb": 1000, "storage_type": "NVMe SSD", "interface": "NVMe",
+            "comparables": offers,
+        }
+        result = estimate_component_value(target, min_samples=5, as_of=AS_OF)
+        self.assertEqual(result["comparables_count"], 6)
+        self.assertEqual(result["match_methods"], {"specification_similarity": 6})
+        self.assertEqual(result["median_price"], 325.0)
+
+    def test_cross_model_gpu_requires_benchmark_similarity(self):
+        offers = [{
+            "id": f"gpu-{i}", "marketplace": "olx", "category": "gpu",
+            "model": f"Different brand GPU {i}", "price": 800 + i * 10,
+            "status": "active", "collected_at": "2026-11-21T11:00:00+00:00",
+            "benchmark_score": 10000 + i * 50, "vram_gb": 8,
+        } for i in range(6)]
+        target = {
+            "category": "gpu", "model": "Target GPU", "benchmark_score": 10100,
+            "vram_gb": 8, "comparables": offers,
+        }
+        result = estimate_component_value(target, min_samples=5, as_of=AS_OF)
+        self.assertEqual(result["comparables_count"], 6)
+        self.assertEqual(result["match_methods"], {"specification_similarity": 6})
+        self.assertEqual(result["confidence"], "medium")
+
+    def test_cross_brand_psu_requires_quality_assessment(self):
+        offers = [{
+            "id": f"psu-{i}", "marketplace": "olx", "category": "psu",
+            "model": f"Unknown brand {i} 650W", "price": 150 + i * 5,
+            "status": "active", "collected_at": "2026-11-21T11:00:00+00:00",
+            "wattage": 650,
+        } for i in range(6)]
+        target = {"category": "psu", "model": "Target PSU", "wattage": 650, "comparables": offers}
+        result = estimate_component_value(target, min_samples=5, as_of=AS_OF)
+        self.assertIsNone(result["estimated_sale_price"])
+        self.assertEqual(result["excluded"]["independent_quality_tier_required"], 6)
+
+
 if __name__ == "__main__":
     unittest.main()
