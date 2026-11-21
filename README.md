@@ -19,13 +19,13 @@ Prywatny projekt do wyszukiwania potencjalnie opłacalnych komputerów używanyc
 - Workflow publikacji panelu przez GitHub Pages.
 
 **Jeszcze niegotowe:**
-- Automatyczne pobieranie cudzych ogłoszeń OLX.
+- Pobieranie publicznych stron ogłoszeń OLX z listy linków podanej przez użytkownika (skrypt `fetch_olx_listings.py`); automatyczne wyszukiwanie nowych ogłoszeń nie jest częścią tego etapu.
 - Automatyczne pobieranie cen rynkowych z OLX lub innego polskiego marketplace.
 - Automatyczne zbieranie porównywalnych ogłoszeń OLX; silnik wyceniania obsługuje już dopasowanie specyfikacji, ale potrzebuje danych porównawczych dostarczonych z dozwolonego źródła.
 - Trwała baza historii ofert i cen.
 - Harmonogram cyklicznych skanów oraz alerty Telegram.
 
-Automatyczne pobieranie i przetwarzanie cudzych treści OLX wymaga ustalenia dozwolonego sposobu dostępu z OLX. Obecny projekt nie obchodzi zabezpieczeń serwisu i nie wykonuje scraperów. Architektura importu jest przygotowana tak, aby można było później podłączyć zatwierdzone źródło danych.
+Pobieranie opisów działa przez zwykłe, sekwencyjne żądania HTTP do publicznych stron ogłoszeń, z domyślną przerwą 3 sekundy między stronami. Skrypt nie loguje się i nie omija CAPTCHA, blokad ani innych mechanizmów dostępu. OLX może odmówić dostępu (np. HTTP 403/429); wtedy zapisujemy status błędu zamiast obchodzić blokadę. Przed regularnym lub masowym użyciem należy sprawdzić aktualne warunki OLX i respektować ograniczenia serwisu.
 
 ## Struktura projektu
 
@@ -58,7 +58,7 @@ Zapisz opis komputera do pliku, np. \`my-description.txt\`, a następnie:
 py scripts/parse_description.py my-description.txt --output parsed-components.json
 \`\`\`
 
-### Analiza paczki ofert
+### Automatyczne pobieranie opisów z listy linków OLX\n\n1. Wyszukaj komputery na OLX i skopiuj adresy interesujących ogłoszeń.\n2. Utwórz plik `olx-urls.txt`, wklejając jeden pełny link w każdym wierszu.\n3. Uruchom:\n\n```powershell\npy scripts/fetch_olx_listings.py olx-urls.txt --output data/imports/olx-listings.json\n```\n\nSkrypt kolejno pobiera publiczne strony przez HTTP i próbuje odczytać opis, tytuł, cenę oraz lokalizację z danych strukturalnych strony i metadanych. Wynik zapisuje w JSON zgodnym z importerem. Domyślna przerwa między żądaniami to 3 sekundy; można ją zwiększyć przez `--delay 5`.\n\nNastępnie uruchom analizę:\n\n```powershell\npy scripts/analyze_import.py data/imports/olx-listings.json --output reports/report.json\n```\n\nSprawdź pola `fetch_status`, `description_complete` i `fetch_error`. Przy HTTP 403, 429 lub stronie weryfikacyjnej skrypt nie omija zabezpieczeń — oznacza ogłoszenie jako niedostępne. Nie uruchamia wielu równoległych pobrań. Skrypt nie wyszukuje sam nowych ofert; listę linków wybierasz ręcznie.\n### Analiza paczki ofert
 
 Przygotuj plik JSON według struktury \`data/listings.example.json\`. Każdy rekord powinien zawierać przynajmniej cenę zakupu oraz opis lub listę podzespołów.
 
