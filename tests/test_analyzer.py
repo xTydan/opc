@@ -165,6 +165,11 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(result["component_value_total"], 1000.0)
         self.assertEqual(result["maximum_purchase_price_for_target_profit"], 566.67)
 
+
+    def test_zero_listing_price_is_rejected_as_unfilled_template(self):
+        with self.assertRaisesRegex(ValueError, "greater than 0 PLN"):
+            analyze_listing({"price": 0, "components": []})
+
     def test_negative_price_is_rejected(self):
         with self.assertRaises(ValueError):
             analyze_listing({"price": -1, "components": []})
