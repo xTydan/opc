@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "source": "demo",
+  "exported_at": "2026-11-21T12:00:00+01:00",
+  "listings": [
+    {
+      "id": "demo-listing-001",
+      "title": "Komputer gamingowy - przykład demonstracyjny",
+      "url": "https://www.olx.pl/",
+      "price": 1600,
+      "currency": "PLN",
+      "location": "Bielsko-Biała",
+      "date_added": null,
+      "collected_at": "2026-11-21T12:00:00+01:00",
+      "status": "unverified",
+      "description": "DANE DEMONSTRACYJNE. Ryzen 5 5600X, karta graficzna RTX 3070, 32 GB RAM, płyta B550, SSD 1 TB.",
+      "components": [
+        {
+          "category": "cpu",
+          "model": "AMD Ryzen 5 5600X",
+          "estimated_sale_price": 300,
+          "confidence": "medium",
+          "comparable_listings": 8,
+          "valuation_updated_at": "2026-11-21T11:00:00+01:00"
+        },
+        {
+          "category": "gpu",
+          "model": "NVIDIA GeForce RTX 3070",
+          "estimated_sale_price": 800,
+          "confidence": "medium",
+          "comparable_listings": 12,
+          "valuation_updated_at": "2026-11-21T11:00:00+01:00"
+        },
+        {
+          "category": "motherboard",
+          "model": "B550 - dokładny model do weryfikacji",
+          "estimated_sale_price": 200,
+          "confidence": "low",
+          "comparable_listings": 3,
+          "valuation_updated_at": "2026-11-21T11:00:00+01:00"
+        },
+        {
+          "category": "ram",
+          "model": "32 GB DDR4 - zestaw, taktowanie nieznane",
+          "estimated_sale_price": 180,
+          "confidence": "low",
+          "comparable_listings": 4,
+          "valuation_updated_at": "2026-11-21T11:00:00+01:00"
+        },
+        {
+          "category": "storage",
+          "model": "SSD 1 TB - model nieznany",
+          "estimated_sale_price": 100,
+          "confidence": "low",
+          "comparable_listings": 3,
+          "valuation_updated_at": "2026-11-21T11:00:00+01:00"
+        }
+      ]
+    }
+  ]
+}
