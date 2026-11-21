@@ -81,7 +81,7 @@ class ComponentParserTests(unittest.TestCase):
 
         self.assertEqual(by_category["cpu"]["model"], "Intel Core i5-11400F")
         self.assertEqual(by_category["gpu"]["manufacturer"], "ZOTAC")
-        self.assertEqual(by_category["gpu"]["gpu_model"], "RTX 3050")
+        self.assertEqual(by_category["gpu"]["gpu_model"], "NVIDIA GeForce RTX 3050")
         self.assertEqual(by_category["gpu"]["vram_gb"], 8)
         self.assertEqual(by_category["ram"]["capacity_gb"], 16)
         self.assertIsNone(by_category["ram"]["stick_count"])
