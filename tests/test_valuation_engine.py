@@ -113,10 +113,10 @@ class ValuationEngineTests(unittest.TestCase):
             "id": f"gpu-{i}", "marketplace": "olx", "category": "gpu",
             "model": f"Different brand GPU {i}", "price": 800 + i * 10,
             "status": "active", "collected_at": "2026-11-21T11:00:00+00:00",
-            "benchmark_score": 10000 + i * 50, "vram_gb": 8,
+            "benchmark_score": 10000 + i * 50, "benchmark_name": "gaming_index", "vram_gb": 8,
         } for i in range(6)]
         target = {
-            "category": "gpu", "model": "Target GPU", "benchmark_score": 10100,
+            "category": "gpu", "model": "Target GPU", "benchmark_score": 10100, "benchmark_name": "gaming_index",
             "vram_gb": 8, "comparables": offers,
         }
         result = estimate_component_value(target, min_samples=5, as_of=AS_OF)
