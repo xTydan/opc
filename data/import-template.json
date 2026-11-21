@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "source": "manual-olx-import",
+  "exported_at": null,
+  "listings": [
+    {
+      "id": "wpisz-wlasny-identyfikator",
+      "title": "Wpisz tytul ogloszenia",
+      "url": "https://www.olx.pl/d/oferta/wklej-link-ogloszenia",
+      "price": 0,
+      "currency": "PLN",
+      "location": "Wpisz lokalizacje",
+      "date_added": null,
+      "collected_at": null,
+      "status": "unverified",
+      "description": "Wklej tutaj caly opis ogloszenia. Zostaw components jako pusta tablice, aby parser sam rozpoznal podzespoly.",
+      "components": []
+    }
+  ]
+}
