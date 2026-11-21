@@ -51,9 +51,13 @@ class ComponentParserTests(unittest.TestCase):
         by_category = {item["category"]: item for item in result["components"]}
 
         self.assertEqual(by_category["cpu"]["model"], "Intel Core i5-11400F")
+        self.assertEqual(by_category["cpu"]["generation"], 11)
+        self.assertEqual(by_category["cpu"]["model_number"], "11400F")
         self.assertIn("RTX 3050", by_category["gpu"]["model"])
         self.assertEqual(by_category["gpu"]["manufacturer"], "ZOTAC")
         self.assertEqual(by_category["gpu"]["vram_gb"], 8)
+        self.assertEqual(by_category["gpu"]["gpu_family"], "NVIDIA GeForce")
+        self.assertEqual(by_category["gpu"]["gpu_series"], "RTX 3050")
         self.assertEqual(by_category["ram"]["capacity_gb"], 16)
         self.assertIsNone(by_category["ram"]["stick_count"])
         self.assertFalse(by_category["ram"]["stick_count_known"])
