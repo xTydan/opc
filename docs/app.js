@@ -93,13 +93,16 @@ function cardFor(row) {
         + " · " + (benchmark.license || "licencja nieznana")
         + " · aktualizacja " + (benchmark.dataset_updated_at || "brak daty");
       item.append(el("small", "", sourceLine));
-      if (benchmark.url) {
-        const sourceLink = el("a", "text-link", "Źródło benchmarku ↗");
-        sourceLink.href = benchmark.url;
-        sourceLink.target = "_blank";
-        sourceLink.rel = "noopener noreferrer";
-        item.append(sourceLink);
-      }
+      try {
+        const sourceUrl = new URL(benchmark.url);
+        if (sourceUrl.protocol === "https:") {
+          const sourceLink = el("a", "text-link", "Źródło benchmarku ↗");
+          sourceLink.href = sourceUrl.href;
+          sourceLink.target = "_blank";
+          sourceLink.rel = "noopener noreferrer";
+          item.append(sourceLink);
+        }
+      } catch { /* Invalid source URLs are displayed as provenance text only. */ }
     }
     if (component.attributes && Object.keys(component.attributes).length) {
       const attrs = Object.entries(component.attributes)
