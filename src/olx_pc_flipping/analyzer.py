@@ -45,6 +45,8 @@ def analyze_listing(
         raise ValueError("Only PLN listings are supported by the current calculator")
 
     listing_price = money(listing.get("price"), "listing.price")
+    if listing_price <= 0:
+        raise ValueError("listing.price must be greater than 0 PLN. Replace the 0 placeholder with the actual OLX asking price.")
     default_costs = default_costs or {}
     listing_costs = listing.get("additional_costs") or {}
     if not isinstance(default_costs, dict):
