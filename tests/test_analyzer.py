@@ -12,8 +12,12 @@ class AnalyzerTests(unittest.TestCase):
             "title": "Test PC",
             "price": 1000,
             "components": [
-                {"model": "GPU", "estimated_sale_price": 900},
-                {"model": "CPU", "estimated_sale_price": 300},
+                {"category": "gpu", "model": "GPU", "estimated_sale_price": 700},
+                {"category": "cpu", "model": "CPU", "estimated_sale_price": 300},
+                {"category": "motherboard", "model": "Board", "estimated_sale_price": 100},
+                {"category": "ram", "model": "RAM", "estimated_sale_price": 100},
+                {"category": "storage", "model": "SSD", "estimated_sale_price": 100},
+                {"category": "psu", "model": "PSU", "estimated_sale_price": 100},
             ],
         }
         result = analyze_listing(
@@ -21,10 +25,10 @@ class AnalyzerTests(unittest.TestCase):
             default_costs={"transport": 50, "packing": 20},
             target_profit=300,
         )
-        self.assertEqual(result["component_value_total"], 1200.0)
+        self.assertEqual(result["component_value_total"], 1400.0)
         self.assertEqual(result["total_investment"], 1070.0)
-        self.assertEqual(result["estimated_net_profit"], 130.0)
-        self.assertEqual(result["maximum_purchase_price_for_target_profit"], 830.0)
+        self.assertEqual(result["estimated_net_profit"], 330.0)
+        self.assertEqual(result["maximum_purchase_price_for_target_profit"], 1030.0)
 
     def test_missing_component_valuation_is_marked(self):
         listing = {
@@ -60,6 +64,26 @@ class AnalyzerTests(unittest.TestCase):
         self.assertTrue({"cpu", "gpu", "ram", "storage"}.issubset(categories))
         self.assertFalse(result["valuation_complete"])
         self.assertEqual(len(result["missing_valuations"]), 4)
+
+
+    def test_partial_component_prices_never_produce_profit(self):
+        listing = {
+            "price": 1000,
+            "components": [
+                {"category": "cpu", "model": "CPU", "estimated_sale_price": 300},
+                {"category": "gpu", "model": "GPU", "estimated_sale_price": 700},
+                {"category": "motherboard", "model": "Board", "estimated_sale_price": 100},
+                {"category": "ram", "model": "RAM", "estimated_sale_price": 100},
+                {"category": "storage", "model": "SSD", "estimated_sale_price": 100},
+            ],
+        }
+        result = analyze_listing(listing)
+        self.assertFalse(result["valuation_complete"])
+        self.assertEqual(result["analysis_status"], "incomplete_inventory")
+        self.assertIsNone(result["estimated_net_profit"])
+        self.assertIsNone(result["roi_percent"])
+        self.assertIsNone(result["maximum_purchase_price_for_target_profit"])
+        self.assertEqual(result["known_component_value_partial"], 1300.0)
 
     def test_negative_price_is_rejected(self):
         with self.assertRaises(ValueError):
