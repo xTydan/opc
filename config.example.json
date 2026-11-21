@@ -27,7 +27,8 @@
       "repairs_reserve": 100
     },
     "minimum_comparable_listings": 5,
-    "maximum_valuation_age_hours": 24
+    "maximum_valuation_age_hours": 24,
+    "conservative_haircut_percent": 3
   },
   "automation": {
     "interval_minutes": 60,
