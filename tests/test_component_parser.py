@@ -1,0 +1,44 @@
+from __future__ import annotations
+
+import unittest
+
+from olx_pc_flipping.component_parser import parse_description
+
+
+class ComponentParserTests(unittest.TestCase):
+    def test_extracts_common_pc_parts(self):
+        text = (
+            "Sprzedam komputer: Ryzen 5 5600X, RTX 3070 ASUS, "
+            "2x16GB DDR4, SSD 1TB, MSI MAG B550 TOMAHAWK, "
+            "zasilacz Corsair 650W."
+        )
+        result = parse_description(text)
+        by_category = {item["category"]: item for item in result["components"]}
+
+        self.assertEqual(by_category["cpu"]["model"], "Ryzen 5 5600X")
+        self.assertIn("RTX 3070", by_category["gpu"]["model"])
+        self.assertEqual(by_category["ram"]["capacity_gb"], 32)
+        self.assertEqual(by_category["ram"]["memory_type"], "DDR4")
+        self.assertEqual(by_category["storage"]["model"], "1TB SSD")
+        self.assertEqual(by_category["psu"]["wattage"], 650)
+        self.assertIsNone(by_category["gpu"]["estimated_sale_price"])
+
+    def test_does_not_invent_missing_components(self):
+        result = parse_description("Komputer gamingowy, bardzo wydajny, ładna obudowa.")
+        self.assertEqual(result["recognized_count"], 0)
+        self.assertIn("gpu", result["unrecognized_categories"])
+        self.assertEqual(result["note"], "Extracted from description only. Prices were not estimated.")
+
+    def test_chipset_only_is_low_confidence(self):
+        result = parse_description("Płyta główna na chipsecie B550.")
+        motherboard = next(x for x in result["components"] if x["category"] == "motherboard")
+        self.assertEqual(motherboard["confidence"], "low")
+        self.assertIn("exact board model unknown", motherboard["model"])
+
+    def test_invalid_input_is_rejected(self):
+        with self.assertRaises(ValueError):
+            parse_description(None)  # type: ignore[arg-type]
+
+
+if __name__ == "__main__":
+    unittest.main()
