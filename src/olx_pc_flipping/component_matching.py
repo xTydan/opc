@@ -64,7 +64,9 @@ def match_comparable(target: dict[str, Any], candidate: dict[str, Any]) -> dict[
             return {"matched": False, "reason": "performance_too_different"}
         if category == "gpu":
             tv, cv = _number(t.get("vram_gb")), _number(c.get("vram_gb"))
-            if tv is not None and cv is not None and abs(tv - cv) > 4:
+            if tv is None or cv is None:
+                return {"matched": False, "reason": "vram_required_for_cross_model_match"}
+            if abs(tv - cv) > 4:
                 return {"matched": False, "reason": "vram_too_different"}
         ts, cs = t.get("socket"), c.get("socket")
         if category == "cpu" and ts and cs and str(ts).casefold() != str(cs).casefold():
@@ -83,10 +85,15 @@ def match_comparable(target: dict[str, Any], candidate: dict[str, Any]) -> dict[
             return {"matched": False, "reason": "capacity_too_different"}
         target_kind = str(t.get("storage_type") or "").casefold().replace(" ", "")
         candidate_kind = str(c.get("storage_type") or "").casefold().replace(" ", "")
-        if target_kind and candidate_kind and target_kind != candidate_kind:
+        if not target_kind or not candidate_kind:
+            return {"matched": False, "reason": "storage_type_required"}
+        if target_kind != candidate_kind:
             return {"matched": False, "reason": "different_storage_type"}
-        target_interface, candidate_interface = t.get("interface"), c.get("interface")
-        if target_interface and candidate_interface and str(target_interface).casefold() != str(candidate_interface).casefold():
+        target_interface = str(t.get("interface") or "").casefold()
+        candidate_interface = str(c.get("interface") or "").casefold()
+        if not target_interface or not candidate_interface:
+            return {"matched": False, "reason": "storage_interface_required"}
+        if target_interface != candidate_interface:
             return {"matched": False, "reason": "different_interface"}
         performance_ratio = _ratio(t.get("performance_score"), c.get("performance_score"))
         if performance_ratio is not None and not (Decimal("0.65") <= performance_ratio <= Decimal("1.50")):
