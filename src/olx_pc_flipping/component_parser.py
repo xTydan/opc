@@ -245,6 +245,8 @@ def _extract_storage(text: str, found: list[dict[str, Any]]) -> None:
 
             model = f"{brand} {size}{unit} {storage_kind}" if brand else f"{size}{unit} {storage_kind}"
             evidence_start = max(0, match.start() - (30 if brand else 0))
+            capacity_gb = int(float(size) * (1000 if unit == "TB" else 1))
+            interface = "NVMe" if kind == "NVME" else None
             _add(
                 found,
                 "storage",
@@ -252,7 +254,9 @@ def _extract_storage(text: str, found: list[dict[str, Any]]) -> None:
                 "medium",
                 text[evidence_start:match.end()],
                 capacity=f"{size}{unit}",
+                capacity_gb=capacity_gb,
                 storage_type=storage_kind,
+                interface=interface,
                 manufacturer=brand,
             )
 
