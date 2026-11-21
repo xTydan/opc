@@ -27,7 +27,7 @@ class ComponentParserTests(unittest.TestCase):
         result = parse_description("Komputer gamingowy, bardzo wydajny, ładna obudowa.")
         self.assertEqual(result["recognized_count"], 0)
         self.assertIn("gpu", result["unrecognized_categories"])
-        self.assertEqual(result["note"], "Extracted from description only. Prices were not estimated.")
+        self.assertEqual(result["note"], "Extracted from supplied text only. Prices were not estimated.")
 
     def test_chipset_only_is_low_confidence(self):
         result = parse_description("Płyta główna na chipsecie B550.")
