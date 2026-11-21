@@ -85,6 +85,43 @@ class AnalyzerTests(unittest.TestCase):
         self.assertIsNone(result["maximum_purchase_price_for_target_profit"])
         self.assertEqual(result["known_component_value_partial"], 1300.0)
 
+
+    def test_uses_fresh_olx_comparables_when_no_manual_price(self):
+        from datetime import datetime
+        from olx_pc_flipping.valuation_engine import normalize_model_key
+
+        now = datetime.fromisoformat("2026-11-21T12:00:00+00:00")
+        model = "ZOTAC RTX 3050 8GB"
+        comparables = []
+        for index, price in enumerate([800, 810, 820, 830, 840, 850]):
+            comparables.append({
+                "id": f"gpu-{index}",
+                "marketplace": "olx",
+                "model": model,
+                "model_key": normalize_model_key(model),
+                "price": price,
+                "status": "active",
+                "collected_at": "2026-11-21T11:00:00+00:00",
+            })
+        components = [
+            {"category": "cpu", "model": "CPU", "estimated_sale_price": 200},
+            {"category": "gpu", "model": model, "comparables": comparables},
+            {"category": "motherboard", "model": "Board", "estimated_sale_price": 100},
+            {"category": "ram", "model": "RAM", "estimated_sale_price": 100},
+            {"category": "storage", "model": "SSD", "estimated_sale_price": 100},
+            {"category": "psu", "model": "PSU", "estimated_sale_price": 100},
+        ]
+        result = analyze_listing(
+            {"price": 1000, "components": components},
+            as_of=now,
+            valuation_options={"minimum_comparable_listings": 5, "maximum_valuation_age_hours": 24},
+        )
+        gpu = next(item for item in result["components"] if item["category"] == "gpu")
+        self.assertEqual(gpu["valuation_status"], "estimated_from_fresh_olx_asking_prices")
+        self.assertEqual(gpu["comparable_listings"], 6)
+        self.assertIsNotNone(gpu["estimated_sale_price"])
+        self.assertTrue(result["valuation_complete"])
+
     def test_negative_price_is_rejected(self):
         with self.assertRaises(ValueError):
             analyze_listing({"price": -1, "components": []})
