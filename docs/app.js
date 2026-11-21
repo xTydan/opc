@@ -75,6 +75,15 @@ function cardFor(row) {
     const confidence = component.confidence ? "Pewność: " + component.confidence : "Pewność nieokreślona";
     const comps = "Porównywalne oferty: " + (component.comparable_listings ?? "brak danych");
     item.append(el("small", "", value + " · " + confidence + " · " + comps));
+    if (component.valuation && component.valuation.median_price != null) {
+      const q1 = component.valuation.q1_price == null ? "—" : money(component.valuation.q1_price);
+      const median = money(component.valuation.median_price);
+      const latest = component.valuation.latest_comparable_at || "brak daty";
+      item.append(el("small", "", "OLX: Q1 " + q1 + " · mediana " + median + " · aktualizacja " + latest));
+    }
+    if (component.valuation && component.valuation.reason) {
+      item.append(el("small", "", "Wycena: " + component.valuation.reason));
+    }
     if (component.evidence) item.append(el("small", "", "Źródło rozpoznania: " + component.evidence));
     componentList.append(item);
   }
@@ -85,6 +94,12 @@ function cardFor(row) {
   ];
   if (missing.length) details.append(el("p", "missing-list", missing.join(" · ")));
   card.append(details);
+  if (row.description) {
+    const descriptionDetails = el("details");
+    descriptionDetails.append(el("summary", "", "Pełny opis ogłoszenia"));
+    descriptionDetails.append(el("p", "description", row.description));
+    card.append(descriptionDetails);
+  }
   return card;
 }
 function filteredRows() {
