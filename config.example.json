@@ -1,0 +1,36 @@
+{
+  "searches": [
+    {
+      "name": "Komputery gamingowe",
+      "query": "komputer gamingowy",
+      "enabled": true
+    },
+    {
+      "name": "Komputery RTX",
+      "query": "komputer RTX",
+      "enabled": true
+    },
+    {
+      "name": "Komputery Ryzen",
+      "query": "komputer Ryzen",
+      "enabled": true
+    }
+  ],
+  "analysis": {
+    "currency": "PLN",
+    "minimum_target_profit": 400,
+    "minimum_roi_percent": 20,
+    "default_additional_costs": {
+      "transport": 50,
+      "packing": 30,
+      "platform_fees": 0,
+      "repairs_reserve": 100
+    },
+    "minimum_comparable_listings": 5,
+    "maximum_valuation_age_hours": 24
+  },
+  "automation": {
+    "interval_minutes": 60,
+    "max_listings_per_import": 500
+  }
+}
