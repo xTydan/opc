@@ -111,7 +111,7 @@ def estimate_component_value(
         if not item.get("category"):
             # Backward compatibility for old imports: exact model only.
             if not expected_key or candidate_key != expected_key:
-                excluded["different_model"] = excluded.get("different_or_unclassified_component", 0) + 1
+                excluded["different_model"] = excluded.get("different_model", 0) + 1
                 continue
             match = {"matched": True, "method": "legacy_exact_model", "price_multiplier": 1.0}
         else:
