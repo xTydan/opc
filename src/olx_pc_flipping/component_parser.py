@@ -392,9 +392,9 @@ def parse_description(description: str) -> dict[str, Any]:
         match = pattern.search(text)
         if match:
             cpu_model = _clean(match.group(0))
-            cpu_details: dict[str, Any] = {"platform_family": "Intel Core" if re.search(r"Intel|Core\\s+i", cpu_model, re.I) else "AMD Ryzen"}
-            intel_match = re.search(r"i[3579]\\s*[- ]?\\s*(\\d{4,5})([A-Z]{0,3})", cpu_model, re.I)
-            ryzen_match = re.search(r"Ryzen\\s+[3579]\\s+(\\d{4,5})([A-Z]{0,4})", cpu_model, re.I)
+            cpu_details: dict[str, Any] = {"platform_family": "Intel Core" if re.search(r"Intel|Core\s+i", cpu_model, re.I) else "AMD Ryzen"}
+            intel_match = re.search(r"i[3579]\s*[- ]?\s*(\d{4,5})([A-Z]{0,3})", cpu_model, re.I)
+            ryzen_match = re.search(r"Ryzen\s+[3579]\s+(\d{4,5})([A-Z]{0,4})", cpu_model, re.I)
             if intel_match:
                 digits = intel_match.group(1)
                 cpu_details["model_number"] = digits + (intel_match.group(2) or "").upper()
