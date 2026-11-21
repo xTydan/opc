@@ -50,7 +50,7 @@ class ComponentParserTests(unittest.TestCase):
         result = parse_description(text)
         by_category = {item["category"]: item for item in result["components"]}
 
-        self.assertEqual(by_category["cpu"]["model"], "Core i5-11400F")
+        self.assertEqual(by_category["cpu"]["model"], "Intel Core i5-11400F")
         self.assertIn("RTX 3050", by_category["gpu"]["model"])
         self.assertEqual(by_category["gpu"]["manufacturer"], "ZOTAC")
         self.assertEqual(by_category["gpu"]["vram_gb"], 8)
