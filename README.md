@@ -168,7 +168,7 @@ Kandydaci do zasilania katalogu:
 - [Open GPU Benchmarks](https://opengpubenchmarks.com/) — publiczne dane wyników GPU na licencji CC BY 4.0; przy wykorzystaniu wymagane jest przypisanie autorstwa i link do źródła.
 - [FINALBENCH](https://finalbench.org/) — archiwum historycznych wyników CPU/GPU/SSD; przydatne jako pomocnicze źródło porównawcze, ale zakres dat i metodologie testów muszą być widoczne.
 
-Importer `hardware_benchmarks.py` przyjmuje lokalne pliki CSV/JSON i wymaga jawnego pola `source`, `license` i `updated_at`. Nie pobiera samodzielnie danych z tych serwisów i nie obchodzi ich limitów. Przykładowy format znajduje się w `data/benchmarks.example.json`.
+Importer `hardware_benchmarks.py` przyjmuje lokalne pliki CSV/JSON i wymaga jawnego pola `source`, `license` i `updated_at`. W CSV te trzy metadane muszą być osobnymi kolumnami powtórzonymi identycznie w każdym wierszu, obok `category`, `model`, `benchmark` i `score`. Nie pobiera samodzielnie danych z tych serwisów i nie obchodzi ich limitów. Przykładowy format znajduje się w `data/benchmarks.example.json`.
 
 Ważne ograniczenie: benchmarki opisują wydajność, a nie wartość rynkową. Nie wolno przeliczać wyniku benchmarku bezpośrednio na złotówki. Służy on wyłącznie do wyboru sensownych odpowiedników; cena musi pochodzić z aktualnych ofert rynkowych.
 
@@ -187,3 +187,11 @@ py scripts/analyze_import.py my-listings.json --config config.json --benchmarks 
 ```
 
 Ważne: przykładowe nazwy `cpu_mark`, `gpu_3dmark`, `storage_index`, `memory_index` w konfiguracji są tylko identyfikatorami oczekiwanych kolumn w Twoim zbiorze. Nie oznaczają, że dołączona przykładowa baza zawiera rzeczywiste lub kompletne wyniki. Dataset musi zawierać te same identyfikatory i rzeczywiste wyniki ze wskazanego źródła.
+
+
+Przykładowy nagłówek CSV dla benchmarków:
+```csv
+source,license,updated_at,category,model,benchmark,score,samples,url
+Open GPU Benchmarks,CC-BY-4.0,2026-11-20,gpu,NVIDIA GeForce RTX 3050 8GB,gaming_index,62.5,120,https://opengpubenchmarks.com/
+```
+Wartości powyżej są przykładowe i nie są prawdziwym wynikiem karty. Metadane źródła/licencji/datę powtarzaj w każdym wierszu.
