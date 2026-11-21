@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import io
 import json
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
@@ -55,12 +56,10 @@ def _read_csv(path: Path) -> dict[str, Any]:
     sample = text[:8192]
     try:
         dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
+        reader = csv.DictReader(io.StringIO(text), dialect=dialect)
     except csv.Error:
         delimiter = ";" if sample.count(";") > sample.count(",") else ","
-        dialect = csv.excel
-        dialect.delimiter = delimiter
-
-    reader = csv.DictReader(text.splitlines(), dialect=dialect)
+        reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
     if not reader.fieldnames:
         raise ValueError("CSV needs a header row")
     fields = {str(name).strip() for name in reader.fieldnames if name}
