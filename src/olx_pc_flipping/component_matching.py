@@ -55,6 +55,12 @@ def match_comparable(target: dict[str, Any], candidate: dict[str, Any]) -> dict[
     checks: list[str] = []
 
     if category in {"cpu", "gpu"}:
+        target_benchmark = t.get("benchmark_name")
+        candidate_benchmark = c.get("benchmark_name")
+        if not target_benchmark or not candidate_benchmark:
+            return {"matched": False, "reason": "benchmark_name_required_for_cross_model_match"}
+        if str(target_benchmark).casefold() != str(candidate_benchmark).casefold():
+            return {"matched": False, "reason": "different_benchmark_methodology"}
         target_score = _number(t.get("benchmark_score"))
         candidate_score = _number(c.get("benchmark_score"))
         if target_score is None or candidate_score is None:
