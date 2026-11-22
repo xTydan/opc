@@ -92,6 +92,7 @@ def search_query(c):
 def olx_url(q): return "https://www.olx.pl/oferty/q-"+quote_plus(q).replace("+","-")
 def compatibility(a,b):
     if a.get("category")!=b.get("category"): return 0,[]
+    if normalize(a.get("model",""))==normalize(b.get("model","")): return 1.0,["dokładnie ten sam model"]
     cat=a["category"]; x=a.get("specs") or {}; y=b.get("specs") or {}; why=[]
     if cat=="ram":
         if x.get("memory_type") and y.get("memory_type")!=x["memory_type"]: return 0,["inna generacja DDR"]
