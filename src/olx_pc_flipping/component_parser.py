@@ -279,10 +279,11 @@ def _extract_storage(text: str, found: list[dict[str, Any]]) -> None:
     )
     for match in contextual_storage.finditer(text):
         prefix = text[max(0, match.start() - 120):match.start()]
-        kind_match = re.search(r"\b(NVMe|SSD|HDD)\b", prefix, re.I)
-        if not kind_match:
+        kind_matches = list(re.finditer(r"\b(NVMe|SSD|HDD)\b", prefix, re.I))
+        if not kind_matches:
             continue
-        kind = kind_match.group(1).upper()
+        # Use the nearest preceding storage label, not an earlier drive's label.
+        kind = kind_matches[-1].group(1).upper()
         size = match.group("size").replace(",", ".")
         unit = match.group("unit").upper()
         brand = match.group("brand").upper()
