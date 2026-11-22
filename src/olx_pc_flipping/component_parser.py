@@ -166,8 +166,10 @@ def _extract_gpu(text: str, found: list[dict[str, Any]]) -> None:
         board_variant = _clean(variant_match.group(1)).upper() if variant_match else None
 
         # VRAM must be adjacent to the GPU mention; do not borrow the PC's RAM size.
-        # The title may say "RTX 4060 24GB RAM" while the actual GPU is\n        # specified later as "RTX 4060 8GB". Never treat system RAM as VRAM.\n        after_model = text[match.end(): min(len(text), match.end() + 120)]
-        vram_match = re.search(r"\\b(4|6|8|10|12|16|20|24)\\s*GB\\b(?!\\s*RAM\\b)", after_model, re.I)
+        # The title may say "RTX 4060 24GB RAM" while the actual GPU is
+        # specified later as "RTX 4060 8GB". Never treat system RAM as VRAM.
+        after_model = text[match.end(): min(len(text), match.end() + 120)]
+        vram_match = re.search(r"\b(4|6|8|10|12|16|20|24)\s*GB\b(?!\s*RAM\b)", after_model, re.I)
         vram = int(vram_match.group(1)) if vram_match else None
 
         display_model = model_core
@@ -269,15 +271,15 @@ def _extract_storage(text: str, found: list[dict[str, Any]]) -> None:
     # Some listings identify drives by model followed by capacity, e.g.
     # "NVMe PCIe: KIOXIA KBG40ZNV, 256 GB" or "HDD: WDC WD5000AZLX, 500 GB".
     contextual_storage = re.compile(
-        r"\\b(?P<brand>Western\\s+Digital|WDC|Kingston|Crucial|Samsung|"
-        r"Seagate|ADATA|Goodram|Lexar|Patriot|WD|Kioxia|TeamGroup|Micron)\\s+"
-        r"(?P<model>[A-Z0-9][A-Z0-9._-]{2,})\\s*[, (:-]+\\s*"
-        r"(?P<size>\\d+(?:[.,]\\d+)?)\\s*(?P<unit>TB|GB)\\b",
+        r"\b(?P<brand>Western\s+Digital|WDC|Kingston|Crucial|Samsung|"
+        r"Seagate|ADATA|Goodram|Lexar|Patriot|WD|Kioxia|TeamGroup|Micron)\s+"
+        r"(?P<model>[A-Z0-9][A-Z0-9._-]{2,})\s*[, (:-]+\s*"
+        r"(?P<size>\d+(?:[.,]\d+)?)\s*(?P<unit>TB|GB)\b",
         re.I,
     )
     for match in contextual_storage.finditer(text):
         prefix = text[max(0, match.start() - 120):match.start()]
-        kind_match = re.search(r"\\b(NVMe|SSD|HDD)\\b", prefix, re.I)
+        kind_match = re.search(r"\b(NVMe|SSD|HDD)\b", prefix, re.I)
         if not kind_match:
             continue
         kind = kind_match.group(1).upper()
