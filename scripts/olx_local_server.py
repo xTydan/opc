@@ -24,7 +24,15 @@ def run_job(job_id: str, urls: list[str]) -> None:
         with JOBS_LOCK:
             JOBS[job_id].update({"state": "running", "total": len(urls), "completed": 0})
         # Fetch one at a time. The fetcher itself applies the 3-second delay.
-        result = fetch_listings(urls, delay_seconds=3.0)
+        def report_progress(completed: int, total: int, last_status: str | None) -> None:
+            with JOBS_LOCK:
+                JOBS[job_id].update({
+                    "completed": completed,
+                    "total": total,
+                    "last_status": last_status,
+                })
+
+        result = fetch_listings(urls, delay_seconds=3.0, progress_callback=report_progress)
         OUTPUT.parent.mkdir(parents=True, exist_ok=True)
         temp_output = OUTPUT.with_suffix(".tmp")
         temp_output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
