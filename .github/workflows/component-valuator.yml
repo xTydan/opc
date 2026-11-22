@@ -1,0 +1,26 @@
+name: Component Valuator Tests
+on:
+  push:
+    paths:
+      - "component_valuator/**"
+      - ".github/workflows/component-valuator.yml"
+  pull_request:
+    paths:
+      - "component_valuator/**"
+      - ".github/workflows/component-valuator.yml"
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m py_compile component_valuator/engine.py component_valuator/server.py
+      - run: cd component_valuator && python -m unittest -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --check component_valuator/app.js
+      - run: node --check component_valuator/extension/popup.js
