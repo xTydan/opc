@@ -9,6 +9,11 @@ class ValuationTests(unittest.TestCase):
         self.assertGreater(compatibility(target,same)[0],0)
         self.assertEqual(compatibility(target,ddr4)[0],0)
 
+    def test_exact_cpu_model_can_be_priced_without_benchmark(self):
+        a={"category":"cpu","model":"Ryzen 5 5600","specs":{}}
+        b={"category":"cpu","model":"Ryzen 5 5600","specs":{}}
+        self.assertEqual(compatibility(a,b)[0],1.0)
+
     def test_storage_rejects_different_interface(self):
         a={"category":"storage","model":"NVMe SSD 1TB","specs":infer_specs("storage","NVMe SSD 1TB")}
         b={"category":"storage","model":"SATA SSD 1TB","specs":infer_specs("storage","SATA SSD 1TB")}
