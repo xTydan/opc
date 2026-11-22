@@ -39,6 +39,8 @@ def infer_specs(category, model):
     elif category=="psu":
         m=re.search(r"\b(3\d{2}|4\d{2}|5\d{2}|6\d{2}|7\d{2}|8\d{2}|9\d{2}|1\d{3})\s*w\b",s)
         if m: out["wattage"]=int(m.group(1))
+        for tier in ("platinum","gold","silver","bronze","white"):
+            if tier in s: out["quality_tier"]=tier; break
     return out
 def extract_components(text):
     patterns=[
@@ -47,7 +49,9 @@ def extract_components(text):
     ("ram",r"\b(?:ddr[345]\s*)?(?:8|16|24|32|48|64|96|128)\s*gb\s*(?:ddr[345])?(?:\s*\d{3,4}\s*mhz)?|\bddr[345]\s*(?:8|16|24|32|48|64|96|128)\s*gb(?:\s*\d{3,4}\s*mhz)?"),
     ("motherboard",r"\b(?:b\d{3,4}|x\d{3,4}|z\d{3,4}|h\d{3,4})[a-z0-9-]*\b"),
     ("storage",r"\b(?:128|240|256|480|500|512|1000|1024|2000|2048|4000)\s*(?:gb|tb)\s*(?:nvme|m\.2|ssd|hdd)?\b"),
-    ("psu",r"\b(?:corsair|be\s*quiet|seasonic|chieftec|silentiumpc|endrorfy|cooler master)\b.{0,40}\b\d{3,4}\s*w\b|\b\d{3,4}\s*w\b.{0,35}\b(?:80\s*plus|bronze|gold|platinum|psu|zasilacz)\b")]
+    ("psu",r"\b(?:corsair|be\s*quiet|seasonic|chieftec|silentiumpc|endrorfy|cooler master)\b.{0,40}\b\d{3,4}\s*w\b|\b\d{3,4}\s*w\b.{0,35}\b(?:80\s*plus|bronze|gold|platinum|psu|zasilacz)\b"),
+    ("cooling",r"\b(?:chłodzenie wodne|chlodzenie wodne|aio|noctua nh-?d15|deepcool ak\d{2,3}|fortis\s*\d*|fera\s*\d*|liquid freezer)\b"),
+    ("case",r"\b(?:obudowa|nzxt h[579]\d{2}|corsair 4\d{3}|lancool|pure base|signum)\b")]
     found=[]
     for cat,pat in patterns:
         for m in re.finditer(pat,text,re.I):
