@@ -45,6 +45,8 @@ CPU_PATTERNS = [
     re.compile(r"\b(?:AMD\s+)?Ryzen\s+[3579]\s+\d{4,5}[A-Z]{0,4}\b", re.I),
     re.compile(r"\b(?:Intel\s+)?Core\s+i[3579]\s*[- ]?\s*\d{4,5}[A-Z]{0,3}\b", re.I),
     re.compile(r"\bIntel\s+Core\s+Ultra\s+[579]\s+\d{3,4}[A-Z]{0,3}\b", re.I),
+    # Common shorthand in Polish listings: "i5 14400" / "i3-12100F".
+    re.compile(r"\b(?:Intel\s+)?i[3579]\s*[- ]?\s*\d{4,5}[A-Z]{0,3}\b", re.I),
 ]
 
 GPU_PATTERNS = [
@@ -164,8 +166,8 @@ def _extract_gpu(text: str, found: list[dict[str, Any]]) -> None:
         board_variant = _clean(variant_match.group(1)).upper() if variant_match else None
 
         # VRAM must be adjacent to the GPU mention; do not borrow the PC's RAM size.
-        after_model = text[match.end(): min(len(text), match.end() + 28)]
-        vram_match = GPU_VRAM_PATTERN.search(after_model)
+        # The title may say "RTX 4060 24GB RAM" while the actual GPU is\n        # specified later as "RTX 4060 8GB". Never treat system RAM as VRAM.\n        after_model = text[match.end(): min(len(text), match.end() + 120)]
+        vram_match = re.search(r"\\b(4|6|8|10|12|16|20|24)\\s*GB\\b(?!\\s*RAM\\b)", after_model, re.I)
         vram = int(vram_match.group(1)) if vram_match else None
 
         display_model = model_core
@@ -261,6 +263,42 @@ def _extract_storage(text: str, found: list[dict[str, Any]]) -> None:
                 interface=interface,
                 manufacturer=brand,
             )
+
+
+
+    # Some listings identify drives by model followed by capacity, e.g.
+    # "NVMe PCIe: KIOXIA KBG40ZNV, 256 GB" or "HDD: WDC WD5000AZLX, 500 GB".
+    contextual_storage = re.compile(
+        r"\\b(?P<brand>Western\\s+Digital|WDC|Kingston|Crucial|Samsung|"
+        r"Seagate|ADATA|Goodram|Lexar|Patriot|WD|Kioxia|TeamGroup|Micron)\\s+"
+        r"(?P<model>[A-Z0-9][A-Z0-9._-]{2,})\\s*[, (:-]+\\s*"
+        r"(?P<size>\\d+(?:[.,]\\d+)?)\\s*(?P<unit>TB|GB)\\b",
+        re.I,
+    )
+    for match in contextual_storage.finditer(text):
+        prefix = text[max(0, match.start() - 120):match.start()]
+        kind_match = re.search(r"\\b(NVMe|SSD|HDD)\\b", prefix, re.I)
+        if not kind_match:
+            continue
+        kind = kind_match.group(1).upper()
+        size = match.group("size").replace(",", ".")
+        unit = match.group("unit").upper()
+        brand = match.group("brand").upper()
+        storage_kind = "NVMe SSD" if kind == "NVME" else kind
+        model = f"{brand} {match.group('model')} {size}{unit} {storage_kind}"
+        capacity_gb = int(float(size) * (1000 if unit == "TB" else 1))
+        _add(
+            found,
+            "storage",
+            model,
+            "medium",
+            text[max(0, match.start() - 35):match.end()],
+            capacity=f"{size}{unit}",
+            capacity_gb=capacity_gb,
+            storage_type=storage_kind,
+            interface="NVMe" if kind == "NVME" else None,
+            manufacturer=brand,
+        )
 
 
 def _extract_motherboard(text: str, found: list[dict[str, Any]]) -> None:
