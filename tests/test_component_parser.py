@@ -132,8 +132,8 @@ class ComponentParserTests(unittest.TestCase):
         self.assertEqual(by_category["cpu"]["model"], "i5 14400")
         self.assertEqual(by_category["gpu"]["vram_gb"], 8)
         storage = [item for item in result["components"] if item["category"] == "storage"]
-        self.assertTrue(any(item["attributes"]["capacity_gb"] == 256 and item["attributes"]["interface"] == "NVMe" for item in storage))
-        self.assertTrue(any(item["attributes"]["capacity_gb"] == 500 and item["attributes"]["storage_type"] == "HDD" for item in storage))
+        self.assertTrue(any(item["capacity_gb"] == 256 and item["interface"] == "NVMe" for item in storage))
+        self.assertTrue(any(item["capacity_gb"] == 500 and item["storage_type"] == "HDD" for item in storage))
 
     def test_invalid_input_is_rejected(self):
         with self.assertRaises(ValueError):
