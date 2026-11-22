@@ -2,7 +2,7 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 import json
-from engine import parse_import,build_report,search_query,olx_url,infer_specs,money
+from engine import parse_import,build_report,search_query,olx_url,infer_specs,money,extract_components
 ROOT=Path(__file__).resolve().parent; DATA=ROOT/"data"; DATA.mkdir(exist_ok=True)
 LF=DATA/"source-listings.json"; OF=DATA/"olx-offers.json"
 def load(p):
@@ -43,7 +43,7 @@ class H(BaseHTTPRequestHandler):
                 if not isinstance(x,dict) or not x.get("url") or not money(x.get("price")): continue
                 cat=x.get("category")
                 if cat not in ("cpu","gpu","ram","motherboard","storage","psu","cooling","case"): continue
-                x["price"]=money(x["price"]); x["specs"]=infer_specs(cat,x.get("title","")); x["model"]=x.get("title","")
+                x["price"]=money(x["price"]); parsed=next((c for c in extract_components(x.get("title","")) if c["category"]==cat),None); x["model"]=parsed["model"] if parsed else x.get("title",""); x["specs"]=parsed["specs"] if parsed else infer_specs(cat,x.get("title",""))
                 indexed[x["url"]]=x
             save(OF,list(indexed.values())); return self.reply({"ok":True,"received":len(body.get("offers",[])),"stored":len(indexed)})
         self.send_error(404)
