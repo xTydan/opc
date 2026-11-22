@@ -353,7 +353,7 @@ def _extract_psu(text: str, found: list[dict[str, Any]]) -> None:
         maxsplit=1,
         flags=re.I,
     )[0]
-    model_part = re.sub(r"^(?:modularnym|modularny|markowym|markowy|sprawnym|sprawny)\s+", "", model_part, flags=re.I)
+    model_part = _clean(model_part)
     model_part = re.sub(r"^(?:modularnym|modularny|markowym|markowy|sprawnym|sprawny)\s+", "", model_part, flags=re.I)
     wattage = int(wattage_match.group(1)) if wattage_match else None
     efficiency = efficiency_match.group(0).upper() if efficiency_match else None
