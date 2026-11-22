@@ -95,14 +95,16 @@ def compatibility(a,b):
     if normalize(a.get("model",""))==normalize(b.get("model","")): return 1.0,["dokładnie ten sam model"]
     cat=a["category"]; x=a.get("specs") or {}; y=b.get("specs") or {}; why=[]
     if cat=="ram":
-        if x.get("memory_type") and y.get("memory_type")!=x["memory_type"]: return 0,["inna generacja DDR"]
-        if x.get("capacity_gb") and y.get("capacity_gb")!=x["capacity_gb"]: return 0,["inna pojemność"]
+        if not all(k in x and k in y for k in ("memory_type","capacity_gb")): return 0,["brak potwierdzonej generacji DDR lub pojemności"]
+        if y["memory_type"]!=x["memory_type"]: return 0,["inna generacja DDR"]
+        if y["capacity_gb"]!=x["capacity_gb"]: return 0,["inna pojemność"]
         if x.get("speed_mhz") and y.get("speed_mhz") and abs(x["speed_mhz"]-y["speed_mhz"])/x["speed_mhz"]>.12: return 0,["taktowanie poza ±12%"]
         return .92,["ta sama generacja i pojemność","zbliżone taktowanie"]
     if cat=="storage":
+        if not all(k in x and k in y for k in ("drive_type","interface","capacity_gb")): return 0,["brak potwierdzonego typu, interfejsu lub pojemności"]
         for k in ("drive_type","interface"):
-            if x.get(k) and y.get(k)!=x[k]: return 0,[f"niezgodny {k}"]
-        if x.get("capacity_gb") and y.get("capacity_gb") and abs(x["capacity_gb"]-y["capacity_gb"])/x["capacity_gb"]>.20: return 0,["inna klasa pojemności"]
+            if y[k]!=x[k]: return 0,[f"niezgodny {k}"]
+        if abs(x["capacity_gb"]-y["capacity_gb"])/x["capacity_gb"]>.20: return 0,["inna klasa pojemności"]
         return .82,["zgodny typ/interfejs i zbliżona pojemność"]
     if cat in ("gpu","cpu"):
         sa,sb=a.get("benchmark_score"),b.get("benchmark_score")
@@ -135,7 +137,7 @@ def value_component(target,offers,min_samples=5):
     selected=exact if len(exact)>=min_samples else matches
     price,used=robust_price([float(x["price"]) for x in selected])
     if len(used)<min_samples: price=None
-    conf="wysoka" if price is not None and len(used)>=10 and exact else "średnia" if price is not None else "brak danych"
+    conf="wysoka" if price is not None and len(used)>=10 and exact else "umiarkowana" if price is not None else "brak danych"
     return {"category":target["category"],"model":target["model"],"class":component_class(target),"estimated_market_price":price,"sample_count":len(used),"exact_model_count":len(exact),"confidence":conf,"method":"dokładny model" if exact and selected is exact else "odpowiedniki klasy","comparables":selected[:100],"updated_at":now_iso(),"reason":None if price is not None else f"Za mało dopasowanych ofert: {len(used)}/{min_samples}. Cena pozostaje niewyznaczona."}
 def build_report(listings,offers):
     targets=[]; seen=set()
