@@ -135,6 +135,15 @@ class ComponentParserTests(unittest.TestCase):
         self.assertTrue(any(item["capacity_gb"] == 256 and item["interface"] == "NVMe" for item in storage))
         self.assertTrue(any(item["capacity_gb"] == 500 and item["storage_type"] == "HDD" for item in storage))
 
+    def test_psu_prefers_explicit_specification_after_generic_mention(self):
+        result = parse_description(
+            "Obudowa z cichym zasilaczem modularnym Thermaltake Smart 730W. "
+            "Zasilacz: Chieftec Power Smart 750W."
+        )
+        psu = next(item for item in result["components"] if item["category"] == "psu")
+        self.assertIn("Chieftec Power Smart", psu["model"])
+        self.assertEqual(psu["wattage"], 750)
+
     def test_invalid_input_is_rejected(self):
         with self.assertRaises(ValueError):
             parse_description(None)  # type: ignore[arg-type]
