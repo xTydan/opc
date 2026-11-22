@@ -119,6 +119,22 @@ class ComponentParserTests(unittest.TestCase):
         self.assertIn("XTX", gpu["gpu_model"])
         self.assertNotEqual(gpu["gpu_model"], "AMD Radeon RX 7900 XT")
 
+    def test_cpu_shorthand_gpu_vram_and_model_based_storage(self):
+        text = (
+            "Komputer i5 14400, RTX 4060 24GB RAM. "
+            "Karta graficzna: RTX 4060 8GB. "
+            "Dysk NVMe PCIe: KIOXIA KBG40ZNV, 256 GB; "
+            "HDD: WDC WD5000AZLX, 500 GB."
+        )
+        result = parse_description(text)
+        by_category = {item["category"]: item for item in result["components"]}
+
+        self.assertEqual(by_category["cpu"]["model"], "i5 14400")
+        self.assertEqual(by_category["gpu"]["vram_gb"], 8)
+        storage = [item for item in result["components"] if item["category"] == "storage"]
+        self.assertTrue(any(item["attributes"]["capacity_gb"] == 256 and item["attributes"]["interface"] == "NVMe" for item in storage))
+        self.assertTrue(any(item["attributes"]["capacity_gb"] == 500 and item["attributes"]["storage_type"] == "HDD" for item in storage))
+
     def test_invalid_input_is_rejected(self):
         with self.assertRaises(ValueError):
             parse_description(None)  # type: ignore[arg-type]
