@@ -21,7 +21,7 @@ Druga, niezależna aplikacja do wyceny podzespołów na podstawie pliku JSON z p
 ## Metodologia
 - RAM: ta sama generacja DDR i pojemność; taktowanie ±12%.
 - Dyski: zgodny typ/interfejs i pojemność ±20%.
-- CPU/GPU: modele różne można porównywać dopiero po dodaniu wyników tego samego benchmarku.
+- CPU/GPU: dokładny model można porównać bez benchmarku; modele zastępcze wymagają zgodnych wyników tego samego benchmarku.
 - Płyty główne: zgodny socket i rodzaj pamięci.
 - Zasilacze: zbliżona moc; klasa jakości musi być rozpoznana osobno.
 - Mediana po filtrze IQR; brak wystarczających danych oznacza brak ceny, nie zgadywanie.
