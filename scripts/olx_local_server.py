@@ -95,7 +95,8 @@ class Handler(BaseHTTPRequestHandler):
         self._write_json(404, {"error": "not found"})
 
     def do_POST(self) -> None:
-        if urlparse(self.path).path != "/collect":
+        path = urlparse(self.path).path
+        if path not in {"/collect", "/status"}:
             self._write_json(404, {"error": "not found"})
             return
         if not self.headers.get("Origin", "").startswith("chrome-extension://"):
@@ -106,6 +107,16 @@ class Handler(BaseHTTPRequestHandler):
             if length <= 0 or length > 1_000_000:
                 raise ValueError("Invalid request size")
             payload = json.loads(self.rfile.read(length))
+            if path == "/status":
+                job_id = payload.get("job_id", "") if isinstance(payload, dict) else ""
+                with JOBS_LOCK:
+                    job = JOBS.get(job_id)
+                    snapshot = dict(job) if job else None
+                if snapshot is None:
+                    self._write_json(404, {"error": "unknown job"})
+                else:
+                    self._write_json(200, snapshot)
+                return
             urls = payload.get("urls") if isinstance(payload, dict) else None
             if not isinstance(urls, list) or not urls:
                 raise ValueError("No listing URLs supplied")
