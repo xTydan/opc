@@ -132,7 +132,7 @@ FIELD_NAMES = (
 FIELD_STOP = rf"(?=\s*(?:[-–—]\s*)?{FIELD_NAMES}\s*:|[.;]|$)"
 
 PSU_CONTEXT_PATTERN = re.compile(
-    r"\b(?:zasilacz|psu|power supply)\s*[:\-]?\s*(?P<details>.*?)" + FIELD_STOP,
+    r"\b(?:zasilacz(?:em|a|y)?|psu|power supply)\b\s*[:\-]?\s*(?P<details>.*?)" + FIELD_STOP,
     re.I,
 )
 COOLER_CONTEXT_PATTERN = re.compile(
@@ -337,7 +337,8 @@ def _extract_psu(text: str, found: list[dict[str, Any]]) -> None:
     matches = list(PSU_CONTEXT_PATTERN.finditer(text))
     if not matches:
         return
-    # Prefer the last explicit PSU mention; introductions often use "zasilaczem"\n    # generically before giving the actual specification later in the description.
+    # Prefer the last explicit PSU mention; introductions often use "zasilaczem"
+    # generically before giving the actual specification later in the description.
     match = matches[-1]
     details = _clean(match.group("details"))
     wattage_match = re.search(r"\b(\d{3,4})\s?W\b", details, re.I)
@@ -352,7 +353,7 @@ def _extract_psu(text: str, found: list[dict[str, Any]]) -> None:
         maxsplit=1,
         flags=re.I,
     )[0]
-    model_part = _clean(model_part)
+    model_part = re.sub(r"^(?:modularnym|modularny|markowym|markowy|sprawnym|sprawny)\s+", "", model_part, flags=re.I)
     model_part = re.sub(r"^(?:modularnym|modularny|markowym|markowy|sprawnym|sprawny)\s+", "", model_part, flags=re.I)
     wattage = int(wattage_match.group(1)) if wattage_match else None
     efficiency = efficiency_match.group(0).upper() if efficiency_match else None
