@@ -334,9 +334,11 @@ def _extract_motherboard(text: str, found: list[dict[str, Any]]) -> None:
 
 
 def _extract_psu(text: str, found: list[dict[str, Any]]) -> None:
-    match = PSU_CONTEXT_PATTERN.search(text)
-    if not match:
+    matches = list(PSU_CONTEXT_PATTERN.finditer(text))
+    if not matches:
         return
+    # Prefer the last explicit PSU mention; introductions often use "zasilaczem"\n    # generically before giving the actual specification later in the description.
+    match = matches[-1]
     details = _clean(match.group("details"))
     wattage_match = re.search(r"\b(\d{3,4})\s?W\b", details, re.I)
     efficiency_match = re.search(
@@ -351,6 +353,7 @@ def _extract_psu(text: str, found: list[dict[str, Any]]) -> None:
         flags=re.I,
     )[0]
     model_part = _clean(model_part)
+    model_part = re.sub(r"^(?:modularnym|modularny|markowym|markowy|sprawnym|sprawny)\\s+", "", model_part, flags=re.I)
     wattage = int(wattage_match.group(1)) if wattage_match else None
     efficiency = efficiency_match.group(0).upper() if efficiency_match else None
     if not model_part and wattage is None:
