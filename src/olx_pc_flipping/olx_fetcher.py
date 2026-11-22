@@ -157,13 +157,13 @@ def _validate_olx_url(url: str) -> str:
 
 
 def fetch_listing(url: str, timeout: int = 20) -> dict[str, Any]:
-    safe_url = _validate_olx_url(url)
-    request = Request(safe_url, headers={
-        "User-Agent": USER_AGENT,
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "pl-PL,pl;q=0.9,en;q=0.5",
-    })
     try:
+        safe_url = _validate_olx_url(url)
+        request = Request(safe_url, headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "text/html,application/xhtml+xml",
+            "Accept-Language": "pl-PL,pl;q=0.9,en;q=0.5",
+        })
         with urlopen(request, timeout=timeout) as response:
             status = response.status
             content_type = response.headers.get("Content-Type", "")
@@ -179,7 +179,7 @@ def fetch_listing(url: str, timeout: int = 20) -> dict[str, Any]:
         reason = "blocked_or_rate_limited" if exc.code in {403, 429, 503} else "http_error"
         return {"url": safe_url, "fetch_status": reason, "http_status": exc.code, "error": str(exc)}
     except (URLError, TimeoutError, OSError, ValueError) as exc:
-        return {"url": safe_url, "fetch_status": "fetch_error", "error": str(exc)}
+        return {"url": url, "fetch_status": "fetch_error", "error": str(exc)}
 
 
 def load_urls(path: Path) -> list[str]:
@@ -198,7 +198,7 @@ def load_urls(path: Path) -> list[str]:
     return list(dict.fromkeys(urls))
 
 
-def fetch_listings(urls: list[str], delay_seconds: float = 3.0) -> dict[str, Any]:
+def fetch_listings(urls: list[str], delay_seconds: float = 3.0, progress_callback=None) -> dict[str, Any]:
     listings = []
     for index, url in enumerate(urls):
         result = fetch_listing(url)
@@ -221,6 +221,8 @@ def fetch_listings(urls: list[str], delay_seconds: float = 3.0) -> dict[str, Any
         })
         if index < len(urls) - 1 and delay_seconds > 0:
             time.sleep(delay_seconds)
+        if progress_callback is not None:
+            progress_callback(index + 1, len(urls), result.get("fetch_status"))
     return {
         "schema_version": 1,
         "source": "olx-public-page-fetch",
