@@ -6,14 +6,14 @@ Druga, niezależna aplikacja do wyceny podzespołów na podstawie pliku JSON z p
 1. Uruchom start.bat (Python 3.11+).
 2. Otwórz http://127.0.0.1:8766.
 3. Zaimportuj olx-listings.json z pierwszej aplikacji.
-4. Kliknij wyszukiwanie OLX przy danym komponencie.
-5. W Chrome otwórz chrome://extensions, włącz tryb programisty i załaduj rozpakowany folder extension.
-6. Na stronie wyników OLX kliknij rozszerzenie i Zbierz widoczne oferty. Powtórz dla kolejnych stron wyników.
+4. W Chrome otwórz chrome://extensions, włącz tryb programisty i załaduj rozpakowany folder `component_valuator/extension`.
+5. Kliknij ikonę rozszerzenia i wybierz „Uruchom automatyczne zbieranie”. Rozszerzenie przejdzie kolejno przez wyszukiwania z kolejki i pobierze widoczne karty z pierwszej strony każdego wyszukiwania.
+6. Postęp i wynik sprawdzisz na pulpicie aplikacji. Nie musisz otwierać każdego wyszukiwania ręcznie.
 
 ## Ograniczenia pierwszej wersji
-- Zbierane są wyłącznie widoczne karty bieżącej strony. Użytkownik otwiera wyszukiwanie i kolejne strony; rozszerzenie nie omija CAPTCHA, logowania, limitów ani blokad.
+- Rozszerzenie automatyzuje kolejno wyszukiwania, ale w tej wersji zbiera tylko widoczne karty z pierwszej strony każdego wyszukiwania. Nie omija CAPTCHA, logowania, limitów ani blokad.
 - Struktura OLX może się zmieniać, więc selektory kart mogą wymagać aktualizacji.
-- Rozszerzenie klasyfikuje kategorię na podstawie frazy w adresie wyszukiwania. Jeśli nie rozpozna kategorii, nie zapisuje wyników.
+- Kategoria jest przekazywana z kolejki aplikacji, więc nie zależy od heurystycznego rozpoznawania frazy URL.
 - To wersja bazowa: parser tytułów i klasyfikacja odpowiedników wymagają dalszego rozszerzenia; nie każda karta z wyników będzie pasować do danego modelu.
 - Minimum 5 dopasowanych ofert; przy mniejszej próbce nie pokazuje ceny.
 - Są to ceny ofertowe, nie potwierdzone ceny transakcyjne.
