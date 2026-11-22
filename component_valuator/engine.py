@@ -24,14 +24,17 @@ def infer_specs(category, model):
         m=re.search(r"\b(3[2-9]\d{2}|4\d{3}|5\d{3}|6\d{3}|7\d{3}|8\d{3})\s*mhz\b",s)
         if m: out["speed_mhz"]=int(m.group(1))
     elif category=="storage":
-        m=re.search(r"\b(128|240|256|480|500|512|1000|1024|2000|2048|4000)\s*(gb|tb)\b",s)
-        if m: out["capacity_gb"]=int(float(m.group(1))*(1024 if m.group(2)=="tb" else 1))
+        m=re.search(r"\b(1|2|4)\s*tb\b",s)
+        if m: out["capacity_gb"]=int(m.group(1))*1024
+        else:
+            m=re.search(r"\b(128|240|256|480|500|512|1000|1024|2000|2048|4000)\s*gb\b",s)
+            if m: out["capacity_gb"]=int(m.group(1))
         if "nvme" in s or "m.2" in s: out["interface"]="NVMe"
         elif "sata" in s: out["interface"]="SATA"
         if "hdd" in s: out["drive_type"]="HDD"
         elif "ssd" in s or out.get("interface")=="NVMe": out["drive_type"]="SSD"
     elif category=="gpu":
-        m=re.search(r"\b(4|6|8|10|12|16|20|24)\s*gb\b",s)
+        m=re.search(r"\b(4|6|8|10|12|16|20|24)\s*gb(?!\s*ram)\b",s)
         if m: out["vram_gb"]=int(m.group(1))
     elif category=="psu":
         m=re.search(r"\b(3\d{2}|4\d{2}|5\d{2}|6\d{2}|7\d{2}|8\d{2}|9\d{2}|1\d{3})\s*w\b",s)
@@ -103,14 +106,13 @@ def compatibility(a,b):
         if cat=="gpu" and x.get("vram_gb") and y.get("vram_gb") and abs(x["vram_gb"]-y["vram_gb"])>4: return 0,["duża różnica VRAM"]
         return .8,["zbliżona wydajność w tym samym benchmarku"]
     if cat=="motherboard":
-        for k in ("socket",):
-            if a.get(k) and b.get(k)!=a[k]: return 0,[f"niezgodny {k}"]
-        if x.get("memory_type") and y.get("memory_type")!=x["memory_type"]: return 0,["inna generacja RAM"]
+        if not a.get("socket") or not b.get("socket") or not x.get("memory_type") or not y.get("memory_type"): return 0,["brak potwierdzonego socketu lub generacji RAM"]
+        if a["socket"]!=b["socket"] or x["memory_type"]!=y["memory_type"]: return 0,["niezgodna platforma"]
         return .75,["zgodna platforma"]
     if cat=="psu":
-        if x.get("wattage") and y.get("wattage") and abs(x["wattage"]-y["wattage"])/x["wattage"]>.15: return 0,["inna klasa mocy"]
-        if a.get("quality_tier") and b.get("quality_tier")!=a["quality_tier"]: return 0,["inna klasa jakości"]
-        return .7,["zbliżona moc"]
+        if not x.get("wattage") or not y.get("wattage") or not x.get("quality_tier") or not y.get("quality_tier"): return 0,["brak potwierdzonej mocy lub klasy jakości"]
+        if abs(x["wattage"]-y["wattage"])/x["wattage"]>.15 or x["quality_tier"]!=y["quality_tier"]: return 0,["inna klasa mocy lub jakości"]
+        return .7,["zbliżona moc i jakość"]
     return 0,["brak reguły bezpiecznego dopasowania"]
 def robust_price(prices):
     if len(prices)<3: return None,[]
